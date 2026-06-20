@@ -1,4 +1,6 @@
+import { useEffect } from "react";
 import { motion } from "framer-motion";
+import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import {
@@ -128,7 +130,23 @@ function formatTimeAgo(date: string | Date) {
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const [, navigate] = useLocation();
   const canViewStats = user && ["admin", "capturista", "consultor"].includes(user.role);
+  const isUserRole = user?.role === "user";
+
+  const { data: perfil, isLoading: perfilLoading } = trpc.perfil.obtener.useQuery(undefined, {
+    enabled: isUserRole,
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (!isUserRole || perfilLoading) return;
+    if (perfil?.completado) {
+      navigate("/portal");
+    } else {
+      navigate("/onboarding");
+    }
+  }, [isUserRole, perfil, perfilLoading, navigate]);
 
   const { data: stats, isLoading } = trpc.servidores.estadisticas.useQuery(
     undefined,
@@ -155,16 +173,8 @@ export default function Dashboard() {
 
   if (!canViewStats) {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
-        <div className="rounded-2xl bg-primary-50 p-5">
-          <Building2 size={28} className="text-primary-500" />
-        </div>
-        <h2 className="mt-4 text-lg font-bold text-slate-800">
-          Bienvenido, {user?.nombre}
-        </h2>
-        <p className="mt-1 text-sm text-slate-400">
-          Contacta al administrador para obtener acceso a más funciones.
-        </p>
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-[3px] border-slate-200 border-t-primary-500" />
       </div>
     );
   }
