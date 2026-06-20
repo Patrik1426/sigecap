@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
-import { Search, Clock, Users, X, BookOpen, CheckCircle2 } from "lucide-react";
+import { Search, Clock, Users, X, BookOpen, CheckCircle2, AlertCircle } from "lucide-react";
 
 const stagger = {
   hidden: {},
@@ -30,7 +30,6 @@ export default function CatalogoCursos() {
 
   const { data: perfil, isLoading: perfilLoading } = trpc.perfil.obtener.useQuery();
 
-  // Redirect to onboarding if no profile
   if (!perfilLoading && perfil === null) {
     navigate("/onboarding");
     return null;
@@ -41,28 +40,55 @@ export default function CatalogoCursos() {
     modalidad: modalidad || undefined,
   });
 
-  const { data: cursoDetalle } = trpc.cursos.obtener.useQuery(
+  const { data: cursoDetalle, isLoading: detalleLoading } = trpc.cursos.obtener.useQuery(
     { id: selectedCursoId! },
     { enabled: selectedCursoId !== null }
   );
 
+  const { data: misSolicitudes } = trpc.solicitudes.misSolicitudes.useQuery();
+
+  const utils = trpc.useUtils();
+
   const solicitarMut = trpc.solicitudes.crear.useMutation({
     onSuccess: () => {
-      setSolicitudMsg({ type: "success", text: "Solicitud enviada exitosamente" });
-      setTimeout(() => setSolicitudMsg(null), 3000);
+      setSolicitudMsg({ type: "success", text: "Solicitud enviada exitosamente. Puedes ver el estado en 'Mis Solicitudes'." });
+      utils.solicitudes.misSolicitudes.invalidate();
     },
     onError: (err) => {
       const msg = err.message.includes("activa")
         ? "Ya tienes una solicitud activa para este curso"
         : err.message;
       setSolicitudMsg({ type: "error", text: msg });
-      setTimeout(() => setSolicitudMsg(null), 4000);
     },
   });
 
   const handleSolicitar = (cursoId: number) => {
     setSolicitudMsg(null);
     solicitarMut.mutate({ cursoId });
+  };
+
+  const closeModal = () => {
+    setSelectedCursoId(null);
+    setSolicitudMsg(null);
+  };
+
+  const tieneSolicitudActiva = (cursoId: number) => {
+    if (!misSolicitudes) return false;
+    return misSolicitudes.some((s: any) => {
+      const sol = s.solicitudes_curso ?? s;
+      return sol.cursoId === cursoId && (sol.estado === "pendiente" || sol.estado === "aprobada");
+    });
+  };
+
+  const getEstadoSolicitud = (cursoId: number) => {
+    if (!misSolicitudes) return null;
+    const found = misSolicitudes.find((s: any) => {
+      const sol = s.solicitudes_curso ?? s;
+      return sol.cursoId === cursoId;
+    });
+    if (!found) return null;
+    const sol = found.solicitudes_curso ?? found;
+    return sol.estado;
   };
 
   if (perfilLoading) {
@@ -82,20 +108,20 @@ export default function CatalogoCursos() {
     >
       {/* Header */}
       <motion.div variants={fadeUp}>
-        <h1 className="text-2xl font-bold text-gray-900">Catalogo de Cursos</h1>
-        <p className="mt-1 text-gray-500">Encuentra cursos de capacitacion disponibles para tu nivel</p>
+        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Catálogo de Cursos</h1>
+        <p className="mt-1 text-sm text-slate-400">Encuentra cursos de capacitación disponibles para tu nivel</p>
       </motion.div>
 
       {/* Filters */}
       <motion.div variants={fadeUp} className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Buscar por categoria..."
+            placeholder="Buscar por categoría..."
             value={categoria}
             onChange={(e) => setCategoria(e.target.value)}
-            className="w-full rounded-xl border border-gray-200 py-2.5 pl-10 pr-4 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+            className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-4 text-sm focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100"
           />
         </div>
         <div className="flex gap-2">
@@ -109,7 +135,7 @@ export default function CatalogoCursos() {
                 className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                   isActive
                     ? "bg-primary-600 text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                 }`}
               >
                 {opt}
@@ -119,79 +145,76 @@ export default function CatalogoCursos() {
         </div>
       </motion.div>
 
-      {/* Solicitud message */}
-      <AnimatePresence>
-        {solicitudMsg && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            className={`rounded-xl p-4 text-sm font-medium ${
-              solicitudMsg.type === "success"
-                ? "bg-emerald-50 text-emerald-700"
-                : "bg-rose-50 text-rose-700"
-            }`}
-          >
-            {solicitudMsg.text}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Course Grid */}
       {cursosLoading ? (
         <div className="flex h-32 items-center justify-center">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-200 border-t-primary-600" />
         </div>
       ) : !cursos?.length ? (
-        <motion.div variants={fadeUp} className="rounded-2xl bg-white p-12 text-center shadow-sm border border-gray-100">
-          <BookOpen className="mx-auto h-12 w-12 text-gray-300" />
-          <p className="mt-3 text-gray-500">No se encontraron cursos con los filtros seleccionados</p>
+        <motion.div variants={fadeUp} className="rounded-2xl bg-white p-12 text-center shadow-sm border border-slate-100">
+          <BookOpen className="mx-auto h-12 w-12 text-slate-300" />
+          <p className="mt-3 text-slate-500">No se encontraron cursos con los filtros seleccionados</p>
         </motion.div>
       ) : (
         <motion.div variants={stagger} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {cursos.map((curso: any) => (
-            <motion.div
-              key={curso.id}
-              variants={fadeUp}
-              onClick={() => setSelectedCursoId(curso.id)}
-              className="cursor-pointer rounded-2xl bg-white p-5 shadow-sm border border-gray-100 hover:border-primary-200 hover:shadow-md transition-all"
-            >
-              <h3 className="font-semibold text-gray-900 line-clamp-1">{curso.nombre}</h3>
-              {curso.descripcion && (
-                <p className="mt-2 text-sm text-gray-500 line-clamp-2">{curso.descripcion}</p>
-              )}
-              <div className="mt-4 flex flex-wrap gap-2">
-                {curso.duracionHoras && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">
-                    <Clock className="h-3 w-3" />
-                    {curso.duracionHoras} horas
-                  </span>
+          {cursos.map((curso: any) => {
+            const estado = getEstadoSolicitud(curso.id);
+            return (
+              <motion.div
+                key={curso.id}
+                variants={fadeUp}
+                onClick={() => setSelectedCursoId(curso.id)}
+                className="relative cursor-pointer rounded-2xl bg-white p-5 shadow-sm border border-slate-200/60 hover:border-primary-200 hover:shadow-md transition-all"
+              >
+                {estado && (
+                  <div className={`absolute top-3 right-3 rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                    estado === "pendiente" ? "bg-amber-50 text-amber-600" :
+                    estado === "aprobada" ? "bg-emerald-50 text-emerald-600" :
+                    estado === "completada" ? "bg-indigo-50 text-indigo-600" :
+                    "bg-rose-50 text-rose-600"
+                  }`}>
+                    {estado === "pendiente" ? "Solicitado" :
+                     estado === "aprobada" ? "Aprobado" :
+                     estado === "completada" ? "Completado" : "Rechazado"}
+                  </div>
                 )}
-                {curso.modalidad && (
-                  <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${MODALIDAD_COLORS[curso.modalidad] ?? "bg-gray-100 text-gray-600"}`}>
-                    {curso.modalidad.charAt(0).toUpperCase() + curso.modalidad.slice(1)}
-                  </span>
+                <h3 className="font-semibold text-slate-900 line-clamp-1 pr-20">{curso.nombre}</h3>
+                {curso.descripcion && (
+                  <p className="mt-2 text-sm text-slate-500 line-clamp-2">{curso.descripcion}</p>
                 )}
-                {curso.nivelRequerido != null && (
-                  <span className="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700">
-                    Nivel {curso.nivelRequerido}
-                  </span>
-                )}
-              </div>
-            </motion.div>
-          ))}
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {curso.duracionHoras && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                      <Clock className="h-3 w-3" />
+                      {curso.duracionHoras}h
+                    </span>
+                  )}
+                  {curso.modalidad && (
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${MODALIDAD_COLORS[curso.modalidad] ?? "bg-slate-100 text-slate-600"}`}>
+                      {curso.modalidad.charAt(0).toUpperCase() + curso.modalidad.slice(1)}
+                    </span>
+                  )}
+                  {curso.nivelRequerido != null && (
+                    <span className="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700">
+                      Nivel {curso.nivelRequerido}
+                    </span>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
         </motion.div>
       )}
 
       {/* Detail Modal */}
       <AnimatePresence>
-        {selectedCursoId !== null && cursoDetalle && (
+        {selectedCursoId !== null && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-            onClick={() => setSelectedCursoId(null)}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+            onClick={closeModal}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 12 }}
@@ -201,83 +224,117 @@ export default function CatalogoCursos() {
               onClick={(e) => e.stopPropagation()}
               className="w-full max-w-lg max-h-[80vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-xl"
             >
-              <div className="flex items-start justify-between">
-                <h2 className="text-lg font-bold text-gray-900">{cursoDetalle.nombre}</h2>
-                <button
-                  onClick={() => setSelectedCursoId(null)}
-                  className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              {cursoDetalle.descripcion && (
-                <p className="mt-3 text-sm text-gray-600 leading-relaxed">{cursoDetalle.descripcion}</p>
-              )}
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                {cursoDetalle.duracionHoras && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">
-                    <Clock className="h-3 w-3" />
-                    {cursoDetalle.duracionHoras} horas
-                  </span>
-                )}
-                {cursoDetalle.modalidad && (
-                  <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${MODALIDAD_COLORS[cursoDetalle.modalidad] ?? "bg-gray-100 text-gray-600"}`}>
-                    {cursoDetalle.modalidad.charAt(0).toUpperCase() + cursoDetalle.modalidad.slice(1)}
-                  </span>
-                )}
-                {cursoDetalle.nivelRequerido != null && (
-                  <span className="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700">
-                    Nivel {cursoDetalle.nivelRequerido}
-                  </span>
-                )}
-              </div>
-
-              {/* Instituciones */}
-              {cursoDetalle.instituciones && cursoDetalle.instituciones.length > 0 && (
-                <div className="mt-5">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-3">Instituciones disponibles</h3>
-                  <div className="space-y-3">
-                    {cursoDetalle.instituciones.map((inst: any, idx: number) => (
-                      <div key={idx} className="rounded-xl bg-gray-50 p-4 text-sm">
-                        <p className="font-medium text-gray-900">{inst.nombre ?? `Institucion ${idx + 1}`}</p>
-                        {inst.horario && (
-                          <p className="mt-1 text-gray-500">Horario: {inst.horario}</p>
-                        )}
-                        {inst.cupoDisponible != null && (
-                          <p className="mt-1 text-gray-500">
-                            <Users className="inline h-3.5 w-3.5 mr-1" />
-                            {inst.cupoDisponible} cupos disponibles
-                          </p>
-                        )}
-                        {inst.fechaInicio && (
-                          <p className="mt-1 text-gray-500">
-                            Inicio: {new Date(inst.fechaInicio).toLocaleDateString("es-MX")}
-                            {inst.fechaFin && ` - Fin: ${new Date(inst.fechaFin).toLocaleDateString("es-MX")}`}
-                          </p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+              {detalleLoading ? (
+                <div className="flex h-32 items-center justify-center">
+                  <div className="h-6 w-6 animate-spin rounded-full border-[3px] border-slate-200 border-t-primary-500" />
                 </div>
-              )}
+              ) : cursoDetalle ? (
+                <>
+                  <div className="flex items-start justify-between">
+                    <h2 className="text-lg font-bold text-slate-900">{cursoDetalle.nombre}</h2>
+                    <button
+                      onClick={closeModal}
+                      className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
 
-              {/* Solicitar button */}
-              <div className="mt-6">
-                <button
-                  onClick={() => handleSolicitar(cursoDetalle.id)}
-                  disabled={solicitarMut.isPending}
-                  className="w-full rounded-xl bg-primary-600 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
-                >
-                  {solicitarMut.isPending ? (
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                  ) : (
-                    <CheckCircle2 className="h-4 w-4" />
+                  {cursoDetalle.descripcion && (
+                    <p className="mt-3 text-sm text-slate-600 leading-relaxed">{cursoDetalle.descripcion}</p>
                   )}
-                  Solicitar Inscripcion
-                </button>
-              </div>
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {cursoDetalle.duracionHoras && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                        <Clock className="h-3 w-3" />
+                        {cursoDetalle.duracionHoras} horas
+                      </span>
+                    )}
+                    {cursoDetalle.modalidad && (
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${MODALIDAD_COLORS[cursoDetalle.modalidad] ?? "bg-slate-100 text-slate-600"}`}>
+                        {cursoDetalle.modalidad.charAt(0).toUpperCase() + cursoDetalle.modalidad.slice(1)}
+                      </span>
+                    )}
+                    {cursoDetalle.nivelRequerido != null && (
+                      <span className="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700">
+                        Nivel {cursoDetalle.nivelRequerido}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Instituciones */}
+                  {cursoDetalle.instituciones && cursoDetalle.instituciones.length > 0 && (
+                    <div className="mt-5">
+                      <h3 className="text-sm font-semibold text-slate-700 mb-3">Instituciones disponibles</h3>
+                      <div className="space-y-3">
+                        {cursoDetalle.instituciones.map((inst: any, idx: number) => (
+                          <div key={idx} className="rounded-xl bg-slate-50 p-4 text-sm">
+                            <p className="font-medium text-slate-900">{inst.instituciones?.nombre ?? inst.nombre ?? `Institución ${idx + 1}`}</p>
+                            {(inst.cursos_instituciones?.horario ?? inst.horario) && (
+                              <p className="mt-1 text-slate-500">Horario: {inst.cursos_instituciones?.horario ?? inst.horario}</p>
+                            )}
+                            {(inst.cursos_instituciones?.cupoDisponible ?? inst.cupoDisponible) != null && (
+                              <p className="mt-1 text-slate-500">
+                                <Users className="inline h-3.5 w-3.5 mr-1" />
+                                {inst.cursos_instituciones?.cupoDisponible ?? inst.cupoDisponible} cupos disponibles
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Feedback message inside modal */}
+                  <AnimatePresence>
+                    {solicitudMsg && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        className={`mt-4 flex items-center gap-2 rounded-xl p-3 text-sm font-medium ${
+                          solicitudMsg.type === "success"
+                            ? "bg-emerald-50 text-emerald-700"
+                            : "bg-rose-50 text-rose-700"
+                        }`}
+                      >
+                        {solicitudMsg.type === "success" ? (
+                          <CheckCircle2 className="h-4 w-4 shrink-0" />
+                        ) : (
+                          <AlertCircle className="h-4 w-4 shrink-0" />
+                        )}
+                        {solicitudMsg.text}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Solicitar button */}
+                  <div className="mt-5">
+                    {tieneSolicitudActiva(cursoDetalle.id) ? (
+                      <div className="flex items-center justify-center gap-2 rounded-xl bg-slate-100 py-2.5 text-sm font-medium text-slate-500">
+                        <CheckCircle2 className="h-4 w-4" />
+                        Ya tienes una solicitud para este curso
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => handleSolicitar(cursoDetalle.id)}
+                        disabled={solicitarMut.isPending}
+                        className="w-full rounded-xl bg-primary-600 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                      >
+                        {solicitarMut.isPending ? (
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                        ) : (
+                          <CheckCircle2 className="h-4 w-4" />
+                        )}
+                        Solicitar Inscripción
+                      </button>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="py-8 text-center text-sm text-slate-400">Curso no encontrado</div>
+              )}
             </motion.div>
           </motion.div>
         )}
