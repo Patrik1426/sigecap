@@ -100,7 +100,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
         {/* Nav */}
         <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
           {visibleItems.map((item) => {
-            const active = location === item.href || (item.href !== "/dashboard" && location.startsWith(item.href + "/"));
+            const active = location === item.href;
             const Icon = item.icon;
             return (
               <Link
