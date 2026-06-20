@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
@@ -86,14 +86,15 @@ export default function Onboarding() {
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
 
   // Guard: redirect if profile already completed
-  const { isLoading: perfilLoading } = trpc.perfil.obtener.useQuery(undefined, {
+  const { data: perfilData, isLoading: perfilLoading } = trpc.perfil.obtener.useQuery(undefined, {
     retry: false,
-    onSuccess: (data: any) => {
-      if (data && data.completado) {
-        navigate("/portal");
-      }
-    },
   });
+
+  useEffect(() => {
+    if (perfilData && perfilData.completado) {
+      navigate("/portal");
+    }
+  }, [perfilData, navigate]);
 
   const crearMutation = trpc.perfil.crear.useMutation({
     onSuccess: () => {
@@ -180,7 +181,7 @@ export default function Onboarding() {
       fechaIngreso: formData.fechaIngreso,
       nivelGobierno: formData.nivelGobierno,
       grupoFuncion: formData.grupoFuncion,
-      contacto: formData.contacto.trim() || undefined,
+      datosContacto: formData.contacto.trim() || null,
     });
   }
 
