@@ -8,6 +8,11 @@ import RestablecerContrasena from "@/pages/RestablecerContrasena";
 import NotFound from "@/pages/NotFound";
 import Servidores from "@/pages/Servidores";
 import Dashboard from "@/pages/Dashboard";
+import Auditoria from "@/pages/Auditoria";
+import Reportes from "@/pages/Reportes";
+import Importacion from "@/pages/Importacion";
+import Usuarios from "@/pages/Usuarios";
+import Onboarding from "@/pages/Onboarding";
 
 function PlaceholderPage({ title }: { title: string }) {
   return (
@@ -101,19 +106,31 @@ export default function App() {
         />
         <ProtectedRoute
           path="/usuarios"
-          component={() => <PlaceholderPage title="Gestión de Usuarios" />}
+          component={Usuarios}
+          isAuthenticated={isAuthenticated}
+          isLoading={isLoading}
+        />
+        <ProtectedRoute
+          path="/importar"
+          component={Importacion}
           isAuthenticated={isAuthenticated}
           isLoading={isLoading}
         />
         <ProtectedRoute
           path="/auditoria"
-          component={() => <PlaceholderPage title="Auditoría" />}
+          component={Auditoria}
           isAuthenticated={isAuthenticated}
           isLoading={isLoading}
         />
         <ProtectedRoute
           path="/reportes"
-          component={() => <PlaceholderPage title="Reportes" />}
+          component={Reportes}
+          isAuthenticated={isAuthenticated}
+          isLoading={isLoading}
+        />
+        <ProtectedRoute
+          path="/onboarding"
+          component={Onboarding}
           isAuthenticated={isAuthenticated}
           isLoading={isLoading}
         />
