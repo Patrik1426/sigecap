@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server/index.ts",
-    "build": "vite build && tsc --noEmit",
+    "build": "vite build",
+    "start": "NODE_ENV=production tsx server/index.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
@@ -44,7 +45,8 @@
     "tailwind-merge": "^2",
     "wouter": "^3",
     "xlsx": "^0.18",
-    "zod": "^4"
+    "zod": "^4",
+    "tsx": "^4"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5",
