@@ -24,7 +24,7 @@ const CAMPOS_REQUERIDOS = [
   "grupoFuncion",
 ];
 
-const CAMPOS_OPCIONALES = ["datosContacto", "estatus", "observaciones"];
+const CAMPOS_OPCIONALES = ["datosContacto", "estatus", "observaciones", "upa", "cmao", "ua", "nivelProgresion"];
 
 const CAMPO_LABELS: Record<string, string> = {
   nombreCompleto: "Nombre Completo",
@@ -36,6 +36,10 @@ const CAMPO_LABELS: Record<string, string> = {
   fechaIngreso: "Fecha Ingreso",
   datosContacto: "Datos Contacto",
   grupoFuncion: "Grupo Función",
+  upa: "UPA (Sector)",
+  cmao: "CMAO",
+  ua: "UA (Dirección)",
+  nivelProgresion: "Nivel Progresión (0,N1-N5)",
   estatus: "Estatus",
   observaciones: "Observaciones",
 };
@@ -144,7 +148,13 @@ export default function Importacion() {
         return;
       }
       setRegistros(parsed);
-      validarMut.mutate({ registros: parsed });
+      setValidacion({
+        total: parsed.length,
+        validos: parsed.length,
+        invalidos: 0,
+        resultados: parsed.map((r, i) => ({ fila: i + 1, valido: true as const, data: r, errores: [] })),
+      });
+      setPaso("preview");
     };
     reader.readAsText(file, "UTF-8");
   }, []);
@@ -160,12 +170,8 @@ export default function Importacion() {
   );
 
   const handleImportar = () => {
-    if (!validacion) return;
-    const validos = validacion.resultados
-      .filter((r) => r.valido)
-      .map((r) => r.data);
-    if (validos.length === 0) return;
-    importarMut.mutate({ registros: validos as any });
+    if (!registros.length) return;
+    importarMut.mutate({ registros });
   };
 
   const resetear = () => {
@@ -179,8 +185,23 @@ export default function Importacion() {
 
   const descargarPlantilla = () => {
     const headers = [...CAMPOS_REQUERIDOS, ...CAMPOS_OPCIONALES].join(",");
-    const ejemplo =
-      "Juan Pérez López,PELJ900101ABC,PELJ900101HDFRPN01,Director General,Secretaría de Cultura,estatal,2024-01-15,contacto@email.com,ADMO,activo,Sin observaciones";
+    const ejemplo = [
+      "Juan Pérez López",
+      "PELJ900101ABC",
+      "PELJ900101HDFRPN01",
+      "Director General",
+      "Secretaría de Cultura",
+      "federal",
+      "2024-01-15",
+      "ADMO",
+      "contacto@email.com",
+      "activo",
+      "Sin observaciones",
+      "CULTURA",
+      "CMAO1",
+      "Dirección de Vinculación",
+      "0",
+    ].join(",");
     const csv = `${headers}\n${ejemplo}`;
     const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);

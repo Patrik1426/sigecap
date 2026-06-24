@@ -34,6 +34,20 @@ const registroSchema = z.object({
   observaciones: z.string().nullable().optional(),
 });
 
+const registroImportSchema = z.object({
+  nombreCompleto: z.string(),
+  rfc: z.string(),
+  curp: z.string(),
+  cargo: z.string(),
+  dependencia: z.string(),
+  nivel: z.string(),
+  fechaIngreso: z.string(),
+  datosContacto: z.string().nullable().optional(),
+  grupoFuncion: z.string(),
+  estatus: z.string(),
+  observaciones: z.string().nullable().optional(),
+});
+
 export const importacionRouter = router({
   validar: requireRole("admin", "capturista")
     .input(z.object({ registros: z.array(z.record(z.string(), z.any())) }))
@@ -60,19 +74,52 @@ export const importacionRouter = router({
     }),
 
   importar: requireRole("admin", "capturista")
-    .input(z.object({ registros: z.array(registroSchema) }))
+    .input(z.object({ registros: z.array(z.record(z.string(), z.any())) }))
     .mutation(async ({ ctx, input }) => {
       const creados: number[] = [];
       const errores: { fila: number; error: string }[] = [];
 
       for (let i = 0; i < input.registros.length; i++) {
-        const reg = input.registros[i];
+        const row = input.registros[i];
+        const nivelProgRaw = (row.nivelProgresion || row.nivel_progresion || row.nivelP || "0").toString().trim();
+        const nivelProgresion = nivelProgRaw.toUpperCase().startsWith("N") ? Number(nivelProgRaw.slice(1)) : Number(nivelProgRaw) || 0;
+
+        const upa = (row.upa || row.UPA || "").toString().toUpperCase().trim() || "SIN ASIGNAR";
+        const cmao = (row.cmao || row.CMAO || "").toString().toUpperCase().trim() || "SIN ASIGNAR";
+        const ua = (row.ua || row.UA || "").toString().trim() || "Sin asignar";
+
+        const reg = registroImportSchema.safeParse({
+          nombreCompleto: row.nombreCompleto || row.nombre_completo || row.nombre || "Por definir",
+          rfc: row.rfc || row.RFC || `PEND${String(i + 1).padStart(9, "0")}`,
+          curp: row.curp || row.CURP || `PEND${String(i + 1).padStart(14, "0")}`,
+          cargo: row.cargo || "Por definir",
+          dependencia: row.dependencia || "Por definir",
+          nivel: row.nivel || "federal",
+          fechaIngreso: row.fechaIngreso || row.fecha_ingreso || new Date().toISOString().split("T")[0],
+          grupoFuncion: row.grupoFuncion || row.grupo_funcion || "ADMO",
+          datosContacto: row.datosContacto || row.datos_contacto || "Sin datos",
+          estatus: row.estatus || "activo",
+          observaciones: row.observaciones || "Sin observaciones",
+        });
+
+        if (!reg.success) {
+          errores.push({
+            fila: i + 1,
+            error: reg.error.issues.map((e) => `${e.path.join(".")}: ${e.message}`).join(", "),
+          });
+          continue;
+        }
+
         try {
           const id = await crearServidor({
-            ...reg,
-            fechaIngreso: new Date(reg.fechaIngreso),
-            datosContacto: reg.datosContacto ?? null,
-            observaciones: reg.observaciones ?? null,
+            ...reg.data,
+            fechaIngreso: new Date(reg.data.fechaIngreso),
+            datosContacto: reg.data.datosContacto ?? null,
+            observaciones: reg.data.observaciones ?? null,
+            upa,
+            cmao,
+            ua,
+            nivelProgresion,
             creadoPor: ctx.user.id,
             actualizadoPor: ctx.user.id,
           });

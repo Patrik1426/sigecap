@@ -5,11 +5,19 @@ import * as schema from "../drizzle/schema";
 import type { InsertServidorPublico, InsertAuditoria } from "../drizzle/schema";
 
 let db: ReturnType<typeof drizzle> | null = null;
+let pool: mysql.Pool | null = null;
 
 export async function getDb() {
   if (!db) {
-    const connection = await mysql.createConnection(process.env.DATABASE_URL!);
-    db = drizzle(connection, { schema, mode: "default" });
+    pool = mysql.createPool({
+      uri: process.env.DATABASE_URL!,
+      waitForConnections: true,
+      connectionLimit: 20,
+      queueLimit: 0,
+      enableKeepAlive: true,
+      keepAliveInitialDelay: 10000,
+    });
+    db = drizzle(pool, { schema, mode: "default" });
   }
   return db;
 }
@@ -368,7 +376,7 @@ export async function actualizarPerfil(userId: number, data: Partial<schema.Inse
 export async function incrementarNivelProgresion(userId: number) {
   const d = await getDb();
   const perfil = await obtenerPerfil(userId);
-  if (!perfil || perfil.nivelProgresion >= 4) return;
+  if (!perfil || perfil.nivelProgresion >= 5) return;
   await d
     .update(schema.perfilesServidor)
     .set({ nivelProgresion: perfil.nivelProgresion + 1 })
@@ -444,6 +452,12 @@ export async function toggleActivoCurso(id: number) {
   const [curso] = await d.select().from(schema.cursos).where(eq(schema.cursos.id, id));
   if (!curso) return;
   await d.update(schema.cursos).set({ activo: !curso.activo }).where(eq(schema.cursos.id, id));
+}
+
+export async function eliminarCurso(id: number) {
+  const d = await getDb();
+  await d.delete(schema.cursosInstituciones).where(eq(schema.cursosInstituciones.cursoId, id));
+  await d.delete(schema.cursos).where(eq(schema.cursos.id, id));
 }
 
 // ─── Instituciones ───────────────────────────────────────────────────

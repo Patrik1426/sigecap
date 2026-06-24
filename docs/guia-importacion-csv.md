@@ -1,6 +1,6 @@
 # Guía de Importación CSV — Secretaría de Cultura
 
-**Sistema:** Portal de Registro y Capacitación de Servidores Públicos  
+**Sistema:** SIGECAP — Sistema de Gestión y Capacitación de Servidores Públicos  
 **Dirigido a:** Capturistas y Administradores  
 **Última actualización:** Junio 2026
 
@@ -38,6 +38,9 @@
 ### Plantilla descargable
 Cada sección de importación en el sistema tiene un botón **"Descargar plantilla CSV"** que genera un archivo con las columnas correctas y un ejemplo. **Se recomienda siempre usar la plantilla como base.**
 
+### Detección automática de encoding
+El sistema detecta automáticamente si el archivo está en UTF-8 o Latin-1 y corrige caracteres especiales. Si aun así los acentos salen mal, guarde el archivo como UTF-8.
+
 ---
 
 ## 2. Importar Servidores Públicos
@@ -46,37 +49,48 @@ Cada sección de importación en el sistema tiene un botón **"Descargar plantil
 
 ### Columnas
 
-| Columna | Obligatoria | Descripción | Formato / Valores válidos | Ejemplo |
-|---------|:-----------:|-------------|--------------------------|---------|
-| `nombreCompleto` | ✅ | Nombre completo del servidor | Mínimo 2 caracteres | Juan Pérez López |
-| `rfc` | ✅ | Registro Federal de Contribuyentes | 12-13 caracteres, letras mayúsculas y números. Formato: `XXXX000000XXX` | PELJ850101AB3 |
-| `curp` | ✅ | Clave Única de Registro de Población | 18 caracteres exactos. Formato: `XXXX000000HXXXXX0X` | PELJ850101HCHRZN09 |
-| `cargo` | ✅ | Puesto o cargo que desempeña | Mínimo 2 caracteres | Jefe de Departamento |
-| `dependencia` | ✅ | Dependencia o institución donde labora | Mínimo 2 caracteres | Secretaría de Educación |
-| `nivel` | ✅ | Nivel de gobierno | `federal`, `estatal`, `municipal`, `otro` | municipal |
-| `grupoFuncion` | ✅ | Grupo de función | `ADMO`, `TECN`, `SERV`, `COMUN`, `PROFE`, `EDU` | ADMO |
-| `fechaIngreso` | ✅ | Fecha de ingreso al servicio | Formato: `AAAA-MM-DD` | 2020-03-15 |
-| `estatus` | ❌ | Estado del servidor | `activo`, `inactivo` (default: `activo`) | activo |
-| `datosContacto` | ❌ | Teléfono, email u otros datos | Texto libre | 614-123-4567 |
-| `observaciones` | ❌ | Notas adicionales | Texto libre | Transferido de Hacienda |
+| Columna | Obligatoria | Descripción | Default si vacío | Ejemplo |
+|---------|:-----------:|-------------|-----------------|---------|
+| `nombreCompleto` | ✅ | Nombre completo del servidor | "Por definir" | Juan Pérez López |
+| `rfc` | ❌ | Registro Federal de Contribuyentes | Genera temporal único (PEND...) | PELJ850101AB3 |
+| `curp` | ✅ | Clave Única de Registro de Población | — | PELJ850101HCHRZN09 |
+| `cargo` | ❌ | Puesto o cargo que desempeña | "Por definir" | Jefe de Departamento |
+| `dependencia` | ❌ | Dependencia donde labora | "Por definir" | Secretaría de Educación |
+| `nivel` | ❌ | Nivel de gobierno | "federal" | federal |
+| `grupoFuncion` | ❌ | Grupo de función | "ADMO" | ADMO |
+| `upa` | ❌ | UPA (Sector) | "SIN ASIGNAR" | CULTURA |
+| `cmao` | ❌ | CMAO | "SIN ASIGNAR" | CMAO1 |
+| `ua` | ❌ | UA (Dirección de adscripción) | "Sin asignar" | Dirección de Vinculación |
+| `nivelProgresion` | ❌ | Nivel de progresión (0, N1-N5) | 0 (Nuevo ingreso) | N2 |
+| `fechaIngreso` | ❌ | Fecha de ingreso al servicio | Fecha de hoy | 2020-03-15 |
+| `datosContacto` | ❌ | Teléfono, email u otros datos | "Sin datos" | 614-123-4567 |
+| `estatus` | ❌ | Estado del servidor | "activo" | activo |
+| `observaciones` | ❌ | Notas adicionales | "Sin observaciones" | Transferido de Hacienda |
 
-### Ejemplo de archivo
+### Ejemplo de archivo (datos mínimos)
 
 ```csv
-nombreCompleto,rfc,curp,cargo,dependencia,nivel,grupoFuncion,fechaIngreso,estatus,datosContacto,observaciones
-Juan Pérez López,PELJ850101AB3,PELJ850101HCHRZN09,Jefe de Departamento,Secretaría de Educación,municipal,ADMO,2020-03-15,activo,614-123-4567,
-María García Ruiz,GARM900215CD5,GARM900215MCHRZR01,Analista,Dirección de Finanzas,estatal,TECN,2019-06-01,activo,maria@correo.com,Personal de confianza
+nombreCompleto,curp,upa,ua
+Juan Pérez López,PELJ850101HCHRZN09,CULTURA,Dirección de Vinculación
+María García Ruiz,GARM900215MCHRZR01,RE,Centro Cultural Helénico
 ```
 
-### Valores válidos para columnas de catálogo
+### Ejemplo de archivo (datos completos)
 
-**nivel:**
-| Valor | Significado |
-|-------|-------------|
-| `federal` | Gobierno Federal |
-| `estatal` | Gobierno Estatal |
-| `municipal` | Gobierno Municipal |
-| `otro` | Otro nivel |
+```csv
+nombreCompleto,rfc,curp,cargo,dependencia,nivel,grupoFuncion,upa,cmao,ua,nivelProgresion,fechaIngreso,datosContacto,estatus,observaciones
+Juan Pérez López,PELJ850101AB3,PELJ850101HCHRZN09,Director,Secretaría de Cultura,federal,ADMO,CULTURA,CMAO1,Dirección de Vinculación,N2,2020-03-15,614-123-4567,activo,
+María García Ruiz,GARM900215CD5,GARM900215MCHRZR01,Analista,Dirección de Finanzas,federal,TECN,RE,CMAO3,Centro Cultural Helénico,0,2019-06-01,maria@correo.com,activo,Personal de confianza
+```
+
+### Campos con catálogo automático
+
+Los siguientes campos construyen su catálogo desde los registros existentes. Si escribes un valor nuevo, queda disponible para futuros registros:
+
+- **UPA (Sector):** Valores iniciales: CULTURA, RE, INDAUTOR
+- **UA (Dirección):** Se alimenta de los registros existentes
+
+### Valores válidos para campos de catálogo
 
 **grupoFuncion:**
 | Valor | Significado |
@@ -88,13 +102,17 @@ María García Ruiz,GARM900215CD5,GARM900215MCHRZR01,Analista,Dirección de Fina
 | `PROFE` | Profesional |
 | `EDU` | Educación |
 
-### Validaciones del RFC
-- Entre 12 y 13 caracteres
-- Primeros 3-4 caracteres: letras mayúsculas (incluye Ñ y &)
-- Siguientes 6: números (fecha de nacimiento AAMMDD)
-- Últimos 3: letras mayúsculas o números (homoclave)
-- Ejemplo válido: `PELJ850101AB3`
-- Ejemplo inválido: `pelj850101ab3` (minúsculas no son válidas)
+**cmao:** CMAO1 a CMAO18
+
+**nivelProgresion:**
+| Valor | Significado |
+|-------|-------------|
+| `0` | Nuevo ingreso |
+| `N1` o `1` | Nivel 1 |
+| `N2` o `2` | Nivel 2 |
+| `N3` o `3` | Nivel 3 |
+| `N4` o `4` | Nivel 4 |
+| `N5` o `5` | Nivel 5 |
 
 ### Validaciones del CURP
 - Exactamente 18 caracteres
@@ -104,7 +122,9 @@ María García Ruiz,GARM900215CD5,GARM900215MCHRZR01,Analista,Dirección de Fina
 - Siguientes 5: letras mayúsculas (entidad y consonantes)
 - Siguiente 1: letra mayúscula o número
 - Último 1: número
-- Ejemplo válido: `PELJ850101HCHRZN09`
+
+### Nota sobre RFC
+Si no se proporciona RFC, el sistema genera uno temporal único (PEND...) que debe ser corregido manualmente después desde la interfaz de edición.
 
 ---
 
@@ -114,50 +134,34 @@ María García Ruiz,GARM900215CD5,GARM900215MCHRZR01,Analista,Dirección de Fina
 
 ### Columnas
 
-| Columna | Obligatoria | Descripción | Formato / Valores válidos | Ejemplo |
-|---------|:-----------:|-------------|--------------------------|---------|
-| `nombre` | ✅ | Nombre del curso | Mínimo 2 caracteres | Ética en el servicio público |
-| `descripcion` | ❌ | Descripción del curso | Texto libre | Formación en valores y conducta ética |
-| `categoria` | ✅ | Tipo de curso | `obligatorio`, `optativo`, `especializado` | obligatorio |
-| `modalidad` | ✅ | Forma de impartición | `presencial`, `virtual`, `mixto` | presencial |
-| `duracionHoras` | ✅ | Duración en horas | Número entero mayor a 0 | 20 |
-| `nivelRequerido` | ❌ | Nivel mínimo del servidor para acceder | `1`, `2`, `3`, `4` (default: `1`) | 1 |
-| `nivelGobierno` | ❌ | Dirigido a servidores de este nivel | `federal`, `estatal`, `municipal`, `otro` | municipal |
+| Columna | Obligatoria | Descripción | Default si vacío | Ejemplo |
+|---------|:-----------:|-------------|-----------------|---------|
+| `nombre` | ✅ | Nombre del curso | — | Ética en el servicio público |
+| `descripcion` | ❌ | Descripción del curso | "Por definir" | Formación en valores |
+| `categoria` | ❌ | Tipo de curso | "obligatorio" | obligatorio |
+| `modalidad` | ❌ | Forma de impartición | "presencial" | presencial |
+| `duracionHoras` | ❌ | Duración en horas | 1 | 20 |
+| `nivelRequerido` | ❌ | Nivel mínimo para acceder | 0 | 0 |
 
-### Ejemplo de archivo
+### Ejemplo de archivo (solo nombres)
 
 ```csv
-nombre,descripcion,categoria,modalidad,duracionHoras,nivelRequerido,nivelGobierno
-Ética en el servicio público,Formación en valores y conducta ética para servidores públicos,obligatorio,presencial,20,1,municipal
-Transparencia y acceso a la información,Marco legal de transparencia gubernamental,obligatorio,virtual,15,1,
-Liderazgo y gestión pública,Habilidades directivas para mandos medios,optativo,mixto,30,2,estatal
-Presupuesto basado en resultados,Metodología PbR para planeación,especializado,presencial,40,3,federal
-Protección de datos personales,Ley General de Protección de Datos,obligatorio,virtual,10,1,
+nombre
+Ética en el servicio público
+Transparencia y acceso a la información
+Liderazgo y gestión pública
 ```
 
 ### Valores válidos
 
-**categoria:**
-| Valor | Significado |
-|-------|-------------|
-| `obligatorio` | Curso obligatorio para todos los servidores |
-| `optativo` | Curso opcional, el servidor elige |
-| `especializado` | Curso especializado para áreas específicas |
+**categoria:** `obligatorio`, `optativo`, `especializado`
 
-**modalidad:**
-| Valor | Significado |
-|-------|-------------|
-| `presencial` | Se imparte en persona |
-| `virtual` | Se imparte en línea |
-| `mixto` | Combinación presencial y virtual |
+**modalidad:** `presencial`, `virtual`, `mixto`
 
-**nivelRequerido:**
-| Valor | Significado |
-|-------|-------------|
-| `1` | Nivel básico (todos los servidores) |
-| `2` | Nivel intermedio (requiere cursos previos) |
-| `3` | Nivel avanzado |
-| `4` | Nivel experto |
+**nivelRequerido:** `0` (Nuevo ingreso), `1`-`5` (N1-N5)
+
+### Nota sobre nombres en mayúsculas
+Si los nombres vienen en MAYÚSCULAS, el sistema los convierte automáticamente a formato título (primera letra mayúscula, resto minúscula).
 
 ---
 
@@ -167,24 +171,13 @@ Protección de datos personales,Ley General de Protección de Datos,obligatorio,
 
 ### Columnas
 
-| Columna | Obligatoria | Descripción | Formato / Valores válidos | Ejemplo |
-|---------|:-----------:|-------------|--------------------------|---------|
-| `nombre` | ✅ | Nombre de la institución | Mínimo 2 caracteres | Universidad Autónoma de Chihuahua |
-| `direccion` | ❌ | Dirección física | Texto libre | Av. Universidad #1, Col. Centro |
-| `contacto` | ❌ | Nombre de la persona de contacto | Texto libre | Lic. Ana Martínez |
-| `telefono` | ❌ | Teléfono de contacto | Texto libre | 614-555-1234 |
-| `email` | ❌ | Correo electrónico | Formato de email válido | capacitacion@uach.mx |
-
-### Ejemplo de archivo
-
-```csv
-nombre,direccion,contacto,telefono,email
-Universidad Autónoma de Chihuahua,Av. Universidad #1 Col. Centro,Lic. Ana Martínez,614-555-1234,capacitacion@uach.mx
-Instituto Tecnológico de Chihuahua,Av. Tecnológico #2909,Ing. Roberto Sánchez,614-555-5678,vinculacion@itchi.edu.mx
-Centro de Capacitación Municipal,Calle Aldama #500 Col. Centro,María López,614-555-9012,centro.cap@municipio.gob.mx
-INAP - Instituto Nacional de Administración Pública,,Dr. Carlos Ruiz,55-5081-2600,contacto@inap.org.mx
-Plataforma México X (en línea),,,, contacto@mexicox.gob.mx
-```
+| Columna | Obligatoria | Descripción | Default si vacío | Ejemplo |
+|---------|:-----------:|-------------|-----------------|---------|
+| `nombre` | ✅ | Nombre de la institución | — | Universidad Autónoma de Chihuahua |
+| `direccion` | ❌ | Dirección física | vacío | Av. Universidad #1, Col. Centro |
+| `contacto` | ❌ | Nombre de persona de contacto | vacío | Lic. Ana Martínez |
+| `telefono` | ❌ | Teléfono de contacto | vacío | 614-555-1234 |
+| `email` | ❌ | Correo electrónico | vacío | capacitacion@uach.mx |
 
 ---
 
@@ -192,42 +185,31 @@ Plataforma México X (en línea),,,, contacto@mexicox.gob.mx
 
 | Error | Causa | Solución |
 |-------|-------|----------|
-| "RFC inválido" | RFC en minúsculas o formato incorrecto | Verificar que esté en MAYÚSCULAS y tenga 12-13 caracteres |
-| "CURP inválido" | CURP en minúsculas, longitud incorrecta o letra de sexo faltante | Verificar MAYÚSCULAS, 18 caracteres exactos, H o M en posición 11 |
-| "RFC o CURP duplicado" | Ya existe un servidor con ese RFC o CURP en el sistema | Verificar si el servidor ya fue registrado antes |
-| "Nombre requerido" | Columna `nombre` o `nombreCompleto` vacía | Llenar el campo obligatorio |
-| "Invalid option" en modalidad | Valor incorrecto (ej: "en línea" en vez de "virtual") | Usar exactamente: `presencial`, `virtual` o `mixto` |
-| "Invalid option" en nivel | Valor incorrecto (ej: "Federal" con mayúscula) | Usar exactamente en minúsculas: `federal`, `estatal`, `municipal`, `otro` |
-| "Invalid option" en grupoFuncion | Valor incorrecto | Usar exactamente en mayúsculas: `ADMO`, `TECN`, `SERV`, `COMUN`, `PROFE`, `EDU` |
-| El archivo no se reconoce | Archivo guardado en formato incorrecto | Guardar como CSV UTF-8, no como .xlsx o .xls |
-| Los acentos se ven mal | Codificación incorrecta | Guardar como **CSV UTF-8** (no ANSI ni Latin-1) |
-| "Fila X: error" | Error en una fila específica | Los registros válidos sí se importan. Corregir las filas con error y reimportar solo esas |
+| "CURP inválido" | CURP en minúsculas o formato incorrecto | Verificar MAYÚSCULAS, 18 caracteres exactos |
+| "RFC o CURP duplicado" | Ya existe un servidor con ese dato | Verificar si ya fue registrado |
+| Los acentos se ven mal | Codificación incorrecta | Guardar como **CSV UTF-8** |
+| El archivo no se reconoce | Formato incorrecto | Guardar como CSV, no como .xlsx |
+| Nombres en MAYÚSCULAS | CSV original sin formato | El sistema convierte automáticamente a título |
 
 ---
 
 ## 6. Preguntas frecuentes
 
-**¿Puedo importar desde Excel directamente?**  
-No. El sistema acepta únicamente archivos CSV. Desde Excel, usar "Guardar como → CSV UTF-8".
+**¿Puedo importar con solo algunos campos?**
+Sí. Solo el nombre y CURP son necesarios para servidores. Para cursos, solo el nombre. Todo lo demás toma valores por defecto.
 
-**¿Qué pasa si una fila tiene error?**  
-Las filas válidas se importan correctamente. Las filas con error se reportan con el número de fila y la descripción del error. Puedes corregirlas y reimportar solo las que fallaron.
+**¿Qué pasa si no tengo el RFC?**
+El sistema genera uno temporal único. El capturista debe corregirlo después desde la interfaz de edición.
 
-**¿Puedo importar el mismo archivo dos veces?**  
-Para servidores: si el RFC o CURP ya existen, esas filas marcarán error "duplicado" y no se crearán de nuevo. Para cursos e instituciones: se crearán registros nuevos (pueden quedar duplicados si el nombre es igual).
+**¿Las columnas deben ir en orden específico?**
+No, mientras los nombres de las columnas coincidan con los indicados en esta guía.
 
-**¿Cuántos registros puedo importar a la vez?**  
-No hay límite fijo, pero se recomienda no superar 500 registros por archivo para evitar tiempos de espera largos.
+**¿Puedo usar nombres de columna en español?**
+El sistema acepta variantes: `nombreCompleto`, `nombre_completo`, `nombre`. Para UPA/CMAO/UA acepta mayúsculas y minúsculas.
 
-**¿Dónde descargo la plantilla?**  
-En cada sección de importación hay un botón "Descargar plantilla CSV" que genera un archivo con las columnas correctas y un ejemplo de llenado.
+**¿Cuántos registros puedo importar a la vez?**
+No hay límite fijo, pero se recomienda no superar 500 registros por archivo.
 
-**¿El orden de las columnas importa?**  
-No, mientras los nombres de las columnas en la primera fila coincidan exactamente con los indicados en esta guía.
-
-**¿Puedo dejar columnas opcionales vacías?**  
-Sí. Las columnas marcadas como "❌ No obligatoria" pueden quedar vacías.
-
-**¿Quién puede importar datos?**  
+**¿Quién puede importar datos?**
 - **Servidores:** Roles admin y capturista
 - **Cursos e Instituciones:** Solo rol admin

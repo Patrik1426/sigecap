@@ -7,6 +7,7 @@ import {
   crearCurso,
   actualizarCurso,
   toggleActivoCurso,
+  eliminarCurso,
   listarCursosInstituciones,
   asignarCursoInstitucion,
   eliminarCursoInstitucion,
@@ -16,7 +17,7 @@ import {
 const cursoInput = z.object({
   nombre: z.string().min(2, "Nombre requerido"),
   descripcion: z.string().nullable().optional(),
-  nivelRequerido: z.number().int().min(1).max(4).default(1),
+  nivelRequerido: z.number().int().min(0).max(5).default(0),
   nivelGobierno: z.enum(["federal", "estatal", "municipal", "otro"]).nullable().optional(),
   categoria: z.string().min(1, "Categoría requerida"),
   duracionHoras: z.number().int().positive(),
@@ -84,6 +85,13 @@ export const cursosRouter = router({
       return { success: true };
     }),
 
+  eliminar: adminProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      await eliminarCurso(input.id);
+      return { success: true };
+    }),
+
   asignarInstitucion: adminProcedure
     .input(z.object({
       cursoId: z.number(),
@@ -121,14 +129,18 @@ export const cursosRouter = router({
 
       for (let i = 0; i < input.registros.length; i++) {
         const row = input.registros[i];
+        const nombre = (row.nombre ?? "").trim();
+        const nombreFormateado = nombre.length > 0 && nombre === nombre.toUpperCase()
+          ? nombre.charAt(0).toUpperCase() + nombre.slice(1).toLowerCase()
+          : nombre;
         const parsed = cursoInput.safeParse({
-          nombre: row.nombre,
-          descripcion: row.descripcion || null,
-          nivelRequerido: Number(row.nivelRequerido ?? row.nivel_requerido ?? 1),
-          nivelGobierno: row.nivelGobierno ?? row.nivel_gobierno ?? null,
-          categoria: row.categoria ?? "obligatorio",
-          duracionHoras: Number(row.duracionHoras ?? row.duracion_horas ?? row.duracion ?? 1),
-          modalidad: row.modalidad ?? "presencial",
+          nombre: nombreFormateado,
+          descripcion: row.descripcion || "Por definir",
+          nivelRequerido: Number(row.nivelRequerido || row.nivel_requerido || 1),
+          nivelGobierno: row.nivelGobierno || row.nivel_gobierno || "federal",
+          categoria: row.categoria || "obligatorio",
+          duracionHoras: Number(row.duracionHoras || row.duracion_horas || row.duracion || 1),
+          modalidad: row.modalidad || "presencial",
         });
 
         if (!parsed.success) {

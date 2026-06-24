@@ -11,13 +11,20 @@
 - Login con "Recordarme" (cookie sesión vs 30 días)
 - Dashboard admin con estadísticas
 - CRUD de Servidores Públicos (alta, edición, baja, búsqueda, filtros)
+- Campos adicionales: UPA (Sector), CMAO (CMAO1-CMAO18), UA (Dirección)
+- Niveles de progresión: 0 (Nuevo ingreso), N1-N5
 - Auditoría de cambios (registro automático de toda mutación)
 - Reportes con gráficas (Recharts)
-- Exportación Excel/PDF (client-side)
-- Importación masiva CSV con validación
+- Exportación Excel/PDF con todos los campos (UPA, CMAO, UA, Nivel)
+- Importación masiva CSV con defaults automáticos y detección de encoding
+- Gestión de Cursos con vista cuadrícula/lista, selección múltiple, eliminación masiva
+- Gestión de Instituciones con importación CSV
 - Gestión de Usuarios (crear, cambiar rol, activar/desactivar)
-- Portal de Capacitación (onboarding, catálogo, solicitudes, progresión de niveles)
+- Portal de Capacitación (onboarding, catálogo, solicitudes, progresión 0-N5)
 - Sistema de baja de servidores (solicitud por usuario + aprobación admin)
+- Sidebar colapsable con identidad gráfica institucional
+- Deploy en Railway (producción)
+- Nivel de gobierno: solo federal
 
 ### Módulos pendientes de desarrollo
 - **Carga de archivos a S3** — la página placeholder existe, falta integración con AWS

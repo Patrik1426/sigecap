@@ -12,6 +12,7 @@ import {
   LogOut,
   Menu,
   X,
+  ChevronLeft,
   ChevronRight,
   Home,
   BookOpen,
@@ -55,6 +56,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   const [location] = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   const role = user?.role ?? "user";
   const visibleItems = navItems.filter((item) => item.roles.includes(role));
@@ -76,29 +78,37 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-30 flex w-[260px] flex-col border-r border-slate-200/80 bg-white transition-transform lg:static lg:translate-x-0 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed inset-y-0 left-0 z-30 flex flex-col bg-primary-500 transition-all duration-300 lg:static lg:translate-x-0 ${
+          collapsed ? "lg:w-18" : "lg:w-60"
+        } w-60 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
-        {/* Logo */}
-        <div className="flex h-16 items-center gap-3 px-5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 text-xs font-extrabold text-white shadow-md shadow-primary-500/20">
-            CC
+        {/* Logo + toggle */}
+        <div className={`flex h-16 items-center ${collapsed ? "justify-center px-2" : "px-4"}`}>
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-500 text-micro font-extrabold text-white shadow-md shadow-black/20">
+            SC
           </div>
-          <div className="min-w-0">
-            <span className="block truncate text-sm font-bold text-slate-900">
-              Secretaría de Cultura
-            </span>
-            <span className="block text-[10px] font-medium text-slate-400">
-              Panel de gestión
-            </span>
-          </div>
+          {!collapsed && (
+            <div className="ml-3 min-w-0 flex-1">
+              <span className="block text-[13px] font-bold text-white leading-tight">
+                Secretaría<br />de Cultura
+              </span>
+              <span className="block text-micro font-medium text-white/50">
+                Panel de gestión
+              </span>
+            </div>
+          )}
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="hidden lg:flex ml-1 h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/15 text-white/70 hover:bg-white/25 hover:text-white transition-colors"
+          >
+            {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
+          </button>
         </div>
 
-        <div className="mx-5 h-px bg-slate-100" />
+        <div className={`h-px bg-white/10 ${collapsed ? "mx-3" : "mx-4"}`} />
 
         {/* Nav */}
-        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+        <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-3 scrollbar-none">
           {visibleItems.map((item) => {
             const active = location === item.href;
             const Icon = item.icon;
@@ -107,19 +117,22 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                 key={item.href}
                 href={item.href}
                 onClick={() => setSidebarOpen(false)}
-                className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all ${
+                title={collapsed ? item.label : undefined}
+                className={`group flex items-center rounded-lg transition-all ${
+                  collapsed ? "justify-center px-2 py-2.5" : "gap-2.5 px-3 py-2"
+                } text-[13px] font-medium ${
                   active
-                    ? "bg-primary-50 text-primary-600 shadow-sm shadow-primary-500/5"
-                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+                    ? "bg-white/15 text-white font-semibold shadow-sm shadow-black/10"
+                    : "text-white/70 hover:bg-white/12 hover:text-white"
                 }`}
               >
                 <Icon
-                  size={18}
-                  className={active ? "text-primary-500" : "text-slate-400 group-hover:text-slate-600"}
+                  size={collapsed ? 18 : 16}
+                  className={`shrink-0 ${active ? "text-white" : "text-white/50 group-hover:text-white/70"}`}
                 />
-                {item.label}
-                {active && (
-                  <div className="ml-auto h-1.5 w-1.5 rounded-full bg-primary-500" />
+                {!collapsed && item.label}
+                {!collapsed && active && (
+                  <div className="ml-auto h-1.5 w-1.5 rounded-full bg-white" />
                 )}
               </Link>
             );
@@ -127,27 +140,46 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
         </nav>
 
         {/* User */}
-        <div className="border-t border-slate-100 p-4">
-          <div className="mb-3 flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary-500 to-accent-500 text-xs font-bold text-white">
-              {user?.nombre?.charAt(0)?.toUpperCase() ?? "U"}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-slate-800">
-                {user?.nombre}
-              </p>
-              <p className="text-[10px] font-medium text-slate-400">
-                {ROLE_LABELS[role] ?? role}
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[13px] font-medium text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-500"
-          >
-            <LogOut size={16} />
-            Cerrar sesión
-          </button>
+        <div className={`border-t border-white/10 ${collapsed ? "p-2" : "p-3"}`}>
+          {collapsed ? (
+            <>
+              <div className="flex justify-center mb-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-accent-500 text-micro font-bold text-white" title={user?.nombre ?? "Usuario"}>
+                  {user?.nombre?.charAt(0)?.toUpperCase() ?? "U"}
+                </div>
+              </div>
+              <button
+                onClick={handleLogout}
+                title="Cerrar sesión"
+                className="flex w-full justify-center rounded-lg py-1.5 text-white/40 hover:bg-white/12 hover:text-rose-300 transition-colors"
+              >
+                <LogOut size={14} />
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="mb-2 flex items-center gap-2.5 rounded-lg bg-white/12 px-2.5 py-2">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-accent-500 text-micro font-bold text-white">
+                  {user?.nombre?.charAt(0)?.toUpperCase() ?? "U"}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[13px] font-semibold text-white">
+                    {user?.nombre}
+                  </p>
+                  <p className="text-micro font-medium text-white/50">
+                    {ROLE_LABELS[role] ?? role}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-caption font-medium text-white/50 transition-colors hover:bg-white/12 hover:text-rose-300"
+              >
+                <LogOut size={14} />
+                Cerrar sesión
+              </button>
+            </>
+          )}
         </div>
       </aside>
 

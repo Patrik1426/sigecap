@@ -5,6 +5,9 @@ import { useAuth } from "@/hooks/useAuth";
 import {
   Plus,
   Pencil,
+  Trash2,
+  LayoutGrid,
+  List,
   X,
   BookOpen,
   Building2,
@@ -48,7 +51,7 @@ const emptyForm: CursoFormData = {
   nombre: "",
   descripcion: "",
   nivelRequerido: 1,
-  nivelGobierno: "",
+  nivelGobierno: "federal",
   categoria: "obligatorio",
   duracionHoras: 1,
   modalidad: "presencial",
@@ -60,6 +63,8 @@ export default function GestionCursos() {
   const [modal, setModal] = useState<ModalState>({ type: "closed" });
   const [form, setForm] = useState<CursoFormData>(emptyForm);
   const [showImport, setShowImport] = useState(false);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   // Assignment form state
   const [assignForm, setAssignForm] = useState({
@@ -101,6 +106,38 @@ export default function GestionCursos() {
       utils.cursos.listar.invalidate();
     },
   });
+
+  const eliminarCursoMut = trpc.cursos.eliminar.useMutation({
+    onSuccess: () => {
+      utils.cursos.listar.invalidate();
+    },
+  });
+
+  const toggleSelect = (id: number) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    if (!cursos) return;
+    if (selected.size === cursos.length) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(cursos.map((c: any) => c.id)));
+    }
+  };
+
+  const eliminarSeleccionados = async () => {
+    if (!confirm(`¿Eliminar ${selected.size} curso${selected.size > 1 ? "s" : ""}? Esta acción no se puede deshacer.`)) return;
+    for (const id of selected) {
+      await eliminarCursoMut.mutateAsync({ id });
+    }
+    setSelected(new Set());
+  };
 
   const asignarMut = trpc.cursos.asignarInstitucion.useMutation({
     onSuccess: () => {
@@ -145,7 +182,7 @@ export default function GestionCursos() {
       nombre: form.nombre,
       descripcion: form.descripcion || undefined,
       nivelRequerido: Number(form.nivelRequerido),
-      nivelGobierno: form.nivelGobierno || undefined,
+      nivelGobierno: "federal" as const,
       categoria: form.categoria,
       duracionHoras: Number(form.duracionHoras),
       modalidad: form.modalidad as "presencial" | "virtual" | "mixto",
@@ -203,7 +240,21 @@ export default function GestionCursos() {
             Administra el catalogo de capacitaciones
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          <div className="flex rounded-lg border border-slate-200 bg-white p-0.5">
+            <button
+              onClick={() => setViewMode("grid")}
+              className={`rounded-md p-2 transition-colors ${viewMode === "grid" ? "bg-primary-500 text-white" : "text-slate-400 hover:text-slate-600"}`}
+            >
+              <LayoutGrid size={15} />
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              className={`rounded-md p-2 transition-colors ${viewMode === "list" ? "bg-primary-500 text-white" : "text-slate-400 hover:text-slate-600"}`}
+            >
+              <List size={15} />
+            </button>
+          </div>
           <button
             onClick={() => setShowImport(true)}
             className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50"
@@ -221,9 +272,38 @@ export default function GestionCursos() {
         </div>
       </motion.div>
 
+      {/* Selection bar */}
+      {selected.size > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between rounded-xl border border-primary-200 bg-primary-50 px-4 py-2.5"
+        >
+          <div className="flex items-center gap-3">
+            <button
+              onClick={selectAll}
+              className="text-caption font-semibold text-primary-600 hover:underline"
+            >
+              {selected.size === cursos?.length ? "Deseleccionar todos" : "Seleccionar todos"}
+            </button>
+            <span className="text-caption text-primary-500">
+              {selected.size} seleccionado{selected.size > 1 ? "s" : ""}
+            </span>
+          </div>
+          <button
+            onClick={eliminarSeleccionados}
+            disabled={eliminarCursoMut.isPending}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-rose-500 px-3 py-1.5 text-caption font-semibold text-white hover:bg-rose-600 disabled:opacity-50 transition-colors"
+          >
+            <Trash2 size={13} />
+            Eliminar {selected.size}
+          </button>
+        </motion.div>
+      )}
+
       {/* Course list */}
       {isLoading ? (
-        <div className="flex min-h-[40vh] items-center justify-center">
+        <div className="flex min-h-[40dvh] items-center justify-center">
           <div className="h-8 w-8 animate-spin rounded-full border-[3px] border-slate-200 border-t-primary-500" />
         </div>
       ) : !cursos?.length ? (
@@ -234,77 +314,144 @@ export default function GestionCursos() {
           <p className="mt-4 text-sm font-medium text-slate-400">No hay cursos registrados</p>
         </motion.div>
       ) : (
-        <motion.div variants={stagger} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {cursos.map((curso: any) => (
-            <motion.div
-              key={curso.id}
-              variants={fadeUp}
-              className="group rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm transition-all hover:shadow-md hover:border-slate-200"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="text-sm font-bold text-slate-800 leading-snug">
-                  {curso.nombre}
-                </h3>
-                <span className={`shrink-0 rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${modalidadColor(curso.modalidad)}`}>
-                  {modalidadLabel(curso.modalidad)}
-                </span>
-              </div>
-
-              {curso.descripcion && (
-                <p className="mt-2 line-clamp-2 text-xs text-slate-400">
-                  {curso.descripcion}
-                </p>
-              )}
-
-              <div className="mt-3 flex flex-wrap items-center gap-3 text-[11px] text-slate-400">
-                <span className="flex items-center gap-1">
-                  <BookOpen size={11} />
-                  Nivel {curso.nivelRequerido}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Clock size={11} />
-                  {curso.duracionHoras}h
-                </span>
-                <span className="rounded-md bg-slate-50 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500">
-                  {curso.categoria}
-                </span>
-              </div>
-
-              <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
-                {/* Toggle activo */}
-                <button
-                  onClick={() => toggleActivoMut.mutate({ id: curso.id })}
-                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-                    curso.activo ? "bg-emerald-500" : "bg-slate-200"
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
-                      curso.activo ? "translate-x-5" : "translate-x-0"
-                    }`}
-                  />
-                </button>
-
-                <div className="flex gap-1">
-                  <button
-                    onClick={() => setModal({ type: "assign", cursoId: curso.id, cursoNombre: curso.nombre })}
-                    className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-50 hover:text-primary-500"
-                    title="Asignar Institucion"
-                  >
-                    <Building2 size={15} />
-                  </button>
-                  <button
-                    onClick={() => openEdit(curso)}
-                    className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-50 hover:text-primary-500"
-                    title="Editar"
-                  >
-                    <Pencil size={15} />
-                  </button>
+        viewMode === "grid" ? (
+          <motion.div variants={stagger} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {cursos.map((curso: any) => (
+              <motion.div
+                key={curso.id}
+                variants={fadeUp}
+                className="group rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm transition-all hover:shadow-md hover:border-slate-200"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start gap-2">
+                    <input
+                      type="checkbox"
+                      checked={selected.has(curso.id)}
+                      onChange={() => toggleSelect(curso.id)}
+                      className="mt-1 h-4 w-4 rounded border-slate-300 text-primary-500 focus:ring-primary-500/20 cursor-pointer"
+                    />
+                    <h3 className="text-sm font-bold text-slate-800 leading-snug">
+                      {curso.nombre}
+                    </h3>
+                  </div>
+                  <span className={`shrink-0 rounded-lg px-2 py-0.5 text-micro font-bold uppercase tracking-wider ${modalidadColor(curso.modalidad)}`}>
+                    {modalidadLabel(curso.modalidad)}
+                  </span>
                 </div>
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
+
+                {curso.descripcion && (
+                  <p className="mt-2 line-clamp-2 text-xs text-slate-400">
+                    {curso.descripcion}
+                  </p>
+                )}
+
+                <div className="mt-3 flex flex-wrap items-center gap-3 text-[11px] text-slate-400">
+                  <span className="flex items-center gap-1">
+                    <BookOpen size={11} />
+                    Nivel {curso.nivelRequerido}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Clock size={11} />
+                    {curso.duracionHoras}h
+                  </span>
+                  <span className="rounded-md bg-slate-50 px-1.5 py-0.5 text-micro font-semibold text-slate-500">
+                    {curso.categoria}
+                  </span>
+                </div>
+
+                <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
+                  <button
+                    onClick={() => toggleActivoMut.mutate({ id: curso.id })}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+                      curso.activo ? "bg-emerald-500" : "bg-slate-200"
+                    }`}
+                  >
+                    <span className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${curso.activo ? "translate-x-5" : "translate-x-0"}`} />
+                  </button>
+                  <div className="flex gap-1">
+                    <button onClick={() => setModal({ type: "assign", cursoId: curso.id, cursoNombre: curso.nombre })} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-50 hover:text-primary-500" title="Asignar">
+                      <Building2 size={15} />
+                    </button>
+                    <button onClick={() => openEdit(curso)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-50 hover:text-primary-500" title="Editar">
+                      <Pencil size={15} />
+                    </button>
+                    <button onClick={() => { if (!confirm(`¿Eliminar "${curso.nombre}"?`)) return; eliminarCursoMut.mutate({ id: curso.id }); }} className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-500" title="Eliminar">
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        ) : (
+          <div className="overflow-x-auto rounded-2xl border border-slate-200/60 bg-white shadow-sm">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50/50">
+                  <th className="w-10 px-3 py-3">
+                    <input
+                      type="checkbox"
+                      checked={cursos.length > 0 && selected.size === cursos.length}
+                      onChange={selectAll}
+                      className="h-4 w-4 rounded border-slate-300 text-primary-500 focus:ring-primary-500/20 cursor-pointer"
+                    />
+                  </th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-slate-500">Nombre</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-slate-500">Categoría</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-slate-500">Modalidad</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-slate-500">Duración</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-slate-500">Nivel</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-slate-500">Estado</th>
+                  <th className="px-3 py-3 text-right text-xs font-semibold text-slate-500">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {cursos.map((curso: any) => (
+                  <tr key={curso.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                    <td className="px-3 py-2.5">
+                      <input
+                        type="checkbox"
+                        checked={selected.has(curso.id)}
+                        onChange={() => toggleSelect(curso.id)}
+                        className="h-4 w-4 rounded border-slate-300 text-primary-500 focus:ring-primary-500/20 cursor-pointer"
+                      />
+                    </td>
+                    <td className="px-3 py-2.5 font-medium text-slate-800 max-w-62.5 truncate">{curso.nombre}</td>
+                    <td className="px-3 py-2.5">
+                      <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">{curso.categoria}</span>
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${modalidadColor(curso.modalidad)}`}>{modalidadLabel(curso.modalidad)}</span>
+                    </td>
+                    <td className="px-3 py-2.5 text-slate-500">{curso.duracionHoras}h</td>
+                    <td className="px-3 py-2.5 text-slate-500">{curso.nivelRequerido}</td>
+                    <td className="px-3 py-2.5">
+                      <button
+                        onClick={() => toggleActivoMut.mutate({ id: curso.id })}
+                        className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${curso.activo ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-400"}`}
+                      >
+                        {curso.activo ? "Activo" : "Inactivo"}
+                      </button>
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <div className="flex justify-end gap-0.5">
+                        <button onClick={() => setModal({ type: "assign", cursoId: curso.id, cursoNombre: curso.nombre })} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-primary-500" title="Asignar">
+                          <Building2 size={14} />
+                        </button>
+                        <button onClick={() => openEdit(curso)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-primary-500" title="Editar">
+                          <Pencil size={14} />
+                        </button>
+                        <button onClick={() => { if (!confirm(`¿Eliminar "${curso.nombre}"?`)) return; eliminarCursoMut.mutate({ id: curso.id }); }} className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-500" title="Eliminar">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
       )}
 
       {/* Create/Edit Modal */}
@@ -351,23 +498,27 @@ export default function GestionCursos() {
                 <textarea
                   value={form.descripcion}
                   onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
-                  className={`${inputClass} min-h-[80px] resize-y`}
+                  className={`${inputClass} min-h-20 resize-y`}
                   placeholder="Descripcion del curso (opcional)"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-slate-500">Nivel Requerido (1-4) *</label>
-                  <input
-                    type="number"
+                  <label className="mb-1 block text-xs font-semibold text-slate-500">Nivel Requerido *</label>
+                  <select
                     required
-                    min={1}
-                    max={4}
                     value={form.nivelRequerido}
                     onChange={(e) => setForm({ ...form, nivelRequerido: Number(e.target.value) })}
                     className={inputClass}
-                  />
+                  >
+                    <option value={0}>0 - Nuevo ingreso</option>
+                    <option value={1}>N1</option>
+                    <option value={2}>N2</option>
+                    <option value={3}>N3</option>
+                    <option value={4}>N4</option>
+                    <option value={5}>N5</option>
+                  </select>
                 </div>
                 <div>
                   <label className="mb-1 block text-xs font-semibold text-slate-500">Duracion (horas) *</label>
@@ -411,22 +562,6 @@ export default function GestionCursos() {
                     ))}
                   </select>
                 </div>
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-500">Nivel de Gobierno</label>
-                <select
-                  value={form.nivelGobierno}
-                  onChange={(e) => setForm({ ...form, nivelGobierno: e.target.value })}
-                  className={inputClass}
-                >
-                  <option value="">Sin especificar</option>
-                  {NIVELES_GOBIERNO.map((n) => (
-                    <option key={n} value={n}>
-                      {n.charAt(0).toUpperCase() + n.slice(1)}
-                    </option>
-                  ))}
-                </select>
               </div>
 
               {/* Assigned institutions (edit mode only) */}
@@ -509,7 +644,7 @@ export default function GestionCursos() {
             {/* Already assigned */}
             {cursoDetalle?.instituciones && cursoDetalle.instituciones.length > 0 && (
               <div className="border-b border-slate-100 px-5 py-4 space-y-2">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Asignaciones actuales</p>
+                <p className="text-micro font-semibold uppercase tracking-widest text-slate-400">Asignaciones actuales</p>
                 {cursoDetalle.instituciones.map((inst: any) => {
                   const ci = inst.cursos_instituciones ?? inst;
                   const instData = inst.instituciones ?? inst;
@@ -674,7 +809,6 @@ export default function GestionCursos() {
             { key: "modalidad", label: "Modalidad", ejemplo: "presencial" },
             { key: "duracionHoras", label: "Duración (hrs)", ejemplo: "20" },
             { key: "nivelRequerido", label: "Nivel requerido", ejemplo: "1" },
-            { key: "nivelGobierno", label: "Nivel gobierno", ejemplo: "municipal" },
           ]}
           onImportar={(registros) => importarCursosMut.mutateAsync({ registros })}
           onClose={() => setShowImport(false)}

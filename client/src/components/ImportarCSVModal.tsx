@@ -10,12 +10,21 @@ interface ImportarCSVModalProps {
   onSuccess: () => void;
 }
 
+function limpiarTexto(text: string): string {
+  return text
+    .replace(/�/g, "")
+    .replace(/Ã¡/g, "á").replace(/Ã©/g, "é").replace(/Ã­/g, "í").replace(/Ã³/g, "ó").replace(/Ãº/g, "ú")
+    .replace(/Ã±/g, "ñ").replace(/Ã¼/g, "ü").replace(/Ã'/g, "Ñ")
+    .replace(/Ã\x81/g, "Á").replace(/Ã\x89/g, "É").replace(/Ã\x8D/g, "Í").replace(/Ã\x93/g, "Ó").replace(/Ã\x9A/g, "Ú")
+    .trim();
+}
+
 function parseCSV(text: string): Record<string, string>[] {
   const lines = text.trim().split(/\r?\n/);
   if (lines.length < 2) return [];
-  const headers = lines[0].split(",").map((h) => h.trim().replace(/^"|"$/g, ""));
+  const headers = lines[0].split(",").map((h) => limpiarTexto(h.replace(/^"|"$/g, "")));
   return lines.slice(1).filter((l) => l.trim()).map((line) => {
-    const values = line.split(",").map((v) => v.trim().replace(/^"|"$/g, ""));
+    const values = line.split(",").map((v) => limpiarTexto(v.replace(/^"|"$/g, "")));
     const obj: Record<string, string> = {};
     headers.forEach((h, i) => {
       obj[h] = values[i] ?? "";
@@ -36,11 +45,19 @@ export default function ImportarCSVModal({ titulo, columnas, onImportar, onClose
     setResult(null);
     const reader = new FileReader();
     reader.onload = (e) => {
-      const text = e.target?.result as string;
-      const rows = parseCSV(text);
-      setPreview(rows);
+      let text = e.target?.result as string;
+      if (text.includes("�") || text.includes("Ã¡") || text.includes("Ã©")) {
+        const readerLatin = new FileReader();
+        readerLatin.onload = (e2) => {
+          const textLatin = e2.target?.result as string;
+          setPreview(parseCSV(textLatin));
+        };
+        readerLatin.readAsText(file, "latin1");
+        return;
+      }
+      setPreview(parseCSV(text));
     };
-    reader.readAsText(file);
+    reader.readAsText(file, "UTF-8");
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -55,7 +72,14 @@ export default function ImportarCSVModal({ titulo, columnas, onImportar, onClose
     try {
       const res = await onImportar(preview);
       setResult({ creados: res.creados, errores: res.errores });
-      if (res.creados > 0) onSuccess();
+      if (res.creados > 0 && res.errores.length === 0) {
+        setTimeout(() => {
+          onClose();
+          onSuccess();
+        }, 1200);
+      } else if (res.creados > 0) {
+        onSuccess();
+      }
     } catch (err: any) {
       setResult({ creados: 0, errores: [{ fila: 0, error: err.message }] });
     } finally {
@@ -134,7 +158,7 @@ export default function ImportarCSVModal({ titulo, columnas, onImportar, onClose
           {/* Column reference */}
           {!preview && (
             <div className="rounded-xl border border-slate-200/60 bg-slate-50 p-4">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-2">Columnas esperadas</p>
+              <p className="text-micro font-semibold uppercase tracking-widest text-slate-400 mb-2">Columnas esperadas</p>
               <div className="grid grid-cols-2 gap-1.5">
                 {columnas.map((c) => (
                   <div key={c.key} className="text-xs text-slate-600">
@@ -176,7 +200,7 @@ export default function ImportarCSVModal({ titulo, columnas, onImportar, onClose
                       <tr key={i} className="border-t border-slate-100">
                         <td className="px-3 py-2 text-slate-400">{i + 1}</td>
                         {columnas.map((c) => (
-                          <td key={c.key} className="px-3 py-2 text-slate-700 max-w-[150px] truncate">
+                          <td key={c.key} className="px-3 py-2 text-slate-700 max-w-37.5 truncate">
                             {row[c.key] ?? <span className="text-slate-300">—</span>}
                           </td>
                         ))}
@@ -185,7 +209,7 @@ export default function ImportarCSVModal({ titulo, columnas, onImportar, onClose
                   </tbody>
                 </table>
                 {preview.length > 10 && (
-                  <p className="border-t border-slate-100 px-3 py-2 text-center text-[10px] text-slate-400">
+                  <p className="border-t border-slate-100 px-3 py-2 text-center text-micro text-slate-400">
                     ...y {preview.length - 10} más
                   </p>
                 )}

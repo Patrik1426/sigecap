@@ -10,6 +10,10 @@ export interface ServidorFormData {
   fechaIngreso: string;
   datosContacto: string;
   grupoFuncion: "ADMO" | "TECN" | "SERV" | "COMUN" | "PROFE" | "EDU";
+  upa: string;
+  cmao: string;
+  ua: string;
+  nivelProgresion: string;
   estatus: "activo" | "inactivo";
   observaciones: string;
 }
@@ -20,10 +24,14 @@ const emptyForm: ServidorFormData = {
   curp: "",
   cargo: "",
   dependencia: "",
-  nivel: "estatal",
+  nivel: "federal",
   fechaIngreso: "",
   datosContacto: "",
   grupoFuncion: "ADMO",
+  upa: "",
+  cmao: "",
+  ua: "",
+  nivelProgresion: "0",
   estatus: "activo",
   observaciones: "",
 };
@@ -53,6 +61,8 @@ interface Props {
   onCancel: () => void;
   loading?: boolean;
   submitLabel?: string;
+  upas?: string[];
+  uas?: string[];
 }
 
 export function ServidorForm({
@@ -61,6 +71,8 @@ export function ServidorForm({
   onCancel,
   loading = false,
   submitLabel = "Guardar",
+  upas = [],
+  uas = [],
 }: Props) {
   const [form, setForm] = useState<ServidorFormData>({
     ...emptyForm,
@@ -186,23 +198,8 @@ export function ServidorForm({
           )}
         </div>
 
-        {/* Nivel */}
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            Nivel *
-          </label>
-          <select
-            value={form.nivel}
-            onChange={(e) => set("nivel", e.target.value)}
-            className={inputClass}
-          >
-            {NIVELES.map((n) => (
-              <option key={n.value} value={n.value}>
-                {n.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* Nivel hardcodeado federal */}
+        <input type="hidden" value="federal" />
 
         {/* Grupo/Función */}
         <div>
@@ -219,6 +216,82 @@ export function ServidorForm({
                 {g.label}
               </option>
             ))}
+          </select>
+        </div>
+
+        {/* UPA (Sector) */}
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">
+            UPA (Sector)
+          </label>
+          <input
+            type="text"
+            list="upa-options"
+            value={form.upa}
+            onChange={(e) => set("upa", e.target.value.toUpperCase())}
+            className={inputClass}
+            placeholder="Ej: CULTURA, RE, INDAUTOR"
+          />
+          <datalist id="upa-options">
+            {upas.map((u) => (
+              <option key={u} value={u} />
+            ))}
+          </datalist>
+        </div>
+
+        {/* CMAO */}
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">
+            CMAO
+          </label>
+          <select
+            value={form.cmao}
+            onChange={(e) => set("cmao", e.target.value)}
+            className={inputClass}
+          >
+            <option value="">Seleccionar CMAO</option>
+            {Array.from({ length: 18 }, (_, i) => `CMAO${i + 1}`).map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* UA (Dirección) */}
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">
+            UA (Dirección)
+          </label>
+          <input
+            type="text"
+            list="ua-options"
+            value={form.ua}
+            onChange={(e) => set("ua", e.target.value)}
+            className={inputClass}
+            placeholder="Dirección de adscripción"
+          />
+          <datalist id="ua-options">
+            {uas.map((u) => (
+              <option key={u} value={u} />
+            ))}
+          </datalist>
+        </div>
+
+        {/* Nivel de Progresión */}
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">
+            Nivel de Progresión
+          </label>
+          <select
+            value={form.nivelProgresion}
+            onChange={(e) => set("nivelProgresion", e.target.value)}
+            className={inputClass}
+          >
+            <option value="0">0 - Nuevo ingreso</option>
+            <option value="1">N1</option>
+            <option value="2">N2</option>
+            <option value="3">N3</option>
+            <option value="4">N4</option>
+            <option value="5">N5</option>
           </select>
         </div>
 

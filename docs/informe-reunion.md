@@ -14,19 +14,23 @@ Presentar el estado actual del sistema y plantear las preguntas que requieren re
 
 ## I. Estado del Sistema
 
-El sistema se encuentra funcional en ambiente de desarrollo con los siguientes módulos operativos:
+El sistema se encuentra funcional en ambiente de desarrollo y producción (Railway) con los siguientes módulos operativos:
 
 | Módulo | Estado | Descripción |
 |--------|--------|-------------|
 | Autenticación | ✅ Completo | Login, registro, sesiones, opción "Recordarme" |
-| Servidores Públicos | ✅ Completo | Alta, edición, baja, búsqueda, filtros, exportación |
-| Importación masiva | ✅ Completo | Carga CSV para servidores, cursos e instituciones con validación previa |
+| Servidores Públicos | ✅ Completo | Alta, edición, baja, búsqueda, filtros, exportación. Campos: UPA, CMAO, UA, Nivel Progresión |
+| Importación masiva | ✅ Completo | CSV para servidores, cursos e instituciones. Defaults automáticos, detección de encoding |
+| Gestión de Cursos | ✅ Completo | CRUD, vista cuadrícula/lista, selección múltiple, eliminación masiva, importación CSV |
+| Gestión de Instituciones | ✅ Completo | CRUD, importación CSV, asignación a cursos con horarios |
 | Auditoría | ✅ Completo | Registro automático de toda operación sobre servidores |
-| Reportes | ✅ Completo | Gráficas por dependencia, nivel, grupo de función, estatus |
-| Exportación | ✅ Completo | Descarga en Excel y PDF |
+| Reportes | ✅ Completo | Gráficas por dependencia, grupo de función, estatus |
+| Exportación | ✅ Completo | Excel y PDF con todos los campos (UPA, CMAO, UA, Nivel) |
 | Gestión de Usuarios | ✅ Completo | Crear usuarios, asignar roles, activar/desactivar cuentas |
-| Portal de Capacitación | ✅ Completo | Onboarding, catálogo de cursos, solicitudes de inscripción, progresión por niveles |
-| Sistema de Baja | ✅ Completo | Solicitud por parte del usuario, aprobación por admin |
+| Portal de Capacitación | ✅ Completo | Onboarding, catálogo, solicitudes, progresión 0 (Nuevo ingreso) a N5 |
+| Sistema de Baja | ✅ Completo | Solicitud por usuario + aprobación admin |
+| Identidad Gráfica | ✅ Completo | Paleta institucional Gob. México, tipografía Noto Sans, sidebar colapsable |
+| Deploy Producción | ✅ Completo | Railway (sigecap-production.up.railway.app) |
 | Carga de archivos | ⏳ Pendiente | Requiere definiciones (ver sección III) |
 | Recuperación de contraseña | ⏳ Pendiente | Requiere servicio de correo (ver sección III) |
 

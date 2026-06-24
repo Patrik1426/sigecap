@@ -32,16 +32,18 @@ export default function Servidores() {
 
   const [search, setSearch] = useState("");
   const [dependencia, setDependencia] = useState("");
-  const [nivel, setNivel] = useState("");
   const [estatus, setEstatus] = useState("");
   const [grupoFuncion, setGrupoFuncion] = useState("");
   const [page, setPage] = useState(1);
   const [modal, setModal] = useState<ModalState>({ type: "closed" });
 
+  const { data: upas } = trpc.servidores.listarUpas.useQuery();
+  const { data: uas } = trpc.servidores.listarUas.useQuery();
+
   const { data, isLoading } = trpc.servidores.listar.useQuery({
     search: search || undefined,
     dependencia: dependencia || undefined,
-    nivel: nivel || undefined,
+    nivel: "federal",
     estatus: estatus || undefined,
     grupoFuncion: grupoFuncion || undefined,
     page,
@@ -81,7 +83,7 @@ export default function Servidores() {
       const datos = await utils.servidores.exportarTodos.fetch({
         search: search || undefined,
         dependencia: dependencia || undefined,
-        nivel: nivel || undefined,
+        nivel: "federal",
         estatus: estatus || undefined,
         grupoFuncion: grupoFuncion || undefined,
       });
@@ -142,6 +144,10 @@ export default function Servidores() {
           : "",
         datosContacto: srv.datosContacto ?? "",
         grupoFuncion: srv.grupoFuncion,
+        upa: srv.upa ?? "",
+        cmao: srv.cmao ?? "",
+        ua: srv.ua ?? "",
+        nivelProgresion: String(srv.nivelProgresion ?? 0),
         estatus: srv.estatus,
         observaciones: srv.observaciones ?? "",
       },
@@ -191,7 +197,7 @@ export default function Servidores() {
       </div>
 
       {/* Filtros */}
-      <div className="mb-4 grid grid-cols-1 gap-3 rounded-lg bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-5">
+      <div className="mb-4 grid grid-cols-1 gap-3 rounded-lg bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-4">
         <div className="relative sm:col-span-2 lg:col-span-1">
           <Search
             size={16}
@@ -218,21 +224,6 @@ export default function Servidores() {
           }}
           className={`${inputClass} w-full`}
         />
-        <select
-          value={nivel}
-          onChange={(e) => {
-            setNivel(e.target.value);
-            setPage(1);
-          }}
-          className={`${inputClass} w-full`}
-        >
-          <option value="">Todos los niveles</option>
-          {NIVELES.filter(Boolean).map((n) => (
-            <option key={n} value={n}>
-              {n.charAt(0).toUpperCase() + n.slice(1)}
-            </option>
-          ))}
-        </select>
         <select
           value={estatus}
           onChange={(e) => {
@@ -275,7 +266,6 @@ export default function Servidores() {
               <th className="hidden px-4 py-3 md:table-cell">CURP</th>
               <th className="hidden px-4 py-3 lg:table-cell">Cargo</th>
               <th className="hidden px-4 py-3 lg:table-cell">Dependencia</th>
-              <th className="px-4 py-3">Nivel</th>
               <th className="px-4 py-3">Estatus</th>
               {(canEdit || canDelete) && (
                 <th className="px-4 py-3">Acciones</th>
@@ -312,11 +302,6 @@ export default function Servidores() {
                   </td>
                   <td className="hidden px-4 py-3 lg:table-cell">
                     {srv.dependencia}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
-                      {srv.nivel}
-                    </span>
                   </td>
                   <td className="px-4 py-3">
                     <span
@@ -423,6 +408,8 @@ export default function Servidores() {
               onCancel={() => setModal({ type: "closed" })}
               loading={crearMut.isPending || actualizarMut.isPending}
               submitLabel={modal.type === "create" ? "Crear" : "Actualizar"}
+              upas={upas ?? []}
+              uas={uas ?? []}
             />
           </div>
         </div>

@@ -63,7 +63,7 @@ const initialFormData: FormData = {
   cargo: "",
   dependencia: "",
   fechaIngreso: "",
-  nivelGobierno: "",
+  nivelGobierno: "federal",
   grupoFuncion: "",
   contacto: "",
 };
@@ -148,9 +148,6 @@ export default function Onboarding() {
     }
 
     if (s === 2) {
-      if (!formData.nivelGobierno) {
-        newErrors.nivelGobierno = "Selecciona un nivel de gobierno";
-      }
       if (!formData.grupoFuncion) {
         newErrors.grupoFuncion = "Selecciona un grupo de funcion";
       }
@@ -352,26 +349,6 @@ export default function Onboarding() {
 
           {step === 2 && (
             <motion.div key="step-2" {...stepTransition} className="space-y-5">
-              <div>
-                <label htmlFor="nivelGobierno" className={labelClass}>
-                  Nivel de Gobierno
-                </label>
-                <select
-                  id="nivelGobierno"
-                  className={selectClass}
-                  value={formData.nivelGobierno}
-                  onChange={(e) => updateField("nivelGobierno", e.target.value)}
-                >
-                  <option value="">Selecciona un nivel</option>
-                  {NIVELES.map((n) => (
-                    <option key={n.value} value={n.value}>
-                      {n.label}
-                    </option>
-                  ))}
-                </select>
-                {errors.nivelGobierno && <p className={errorClass}>{errors.nivelGobierno}</p>}
-              </div>
-
               <div>
                 <label htmlFor="grupoFuncion" className={labelClass}>
                   Grupo de Funcion

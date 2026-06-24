@@ -12,10 +12,9 @@
     "declarationMap": true,
     "sourceMap": true,
     "jsx": "react-jsx",
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["client/src/*"],
-      "@shared/*": ["shared/*"]
+      "@/*": ["./client/src/*"],
+      "@shared/*": ["./shared/*"]
     },
     "outDir": "dist",
     "types": ["node"]

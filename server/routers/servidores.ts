@@ -155,6 +155,26 @@ export const servidoresRouter = router({
       return { success: true };
     }),
 
+  listarUpas: protectedProcedure.query(async () => {
+    const { getDb } = await import("../db");
+    const schema = await import("../../drizzle/schema");
+    const d = await getDb();
+    const rows = await d.selectDistinct({ upa: schema.servidoresPublicos.upa }).from(schema.servidoresPublicos);
+    const upas = rows.map((r) => r.upa).filter(Boolean) as string[];
+    if (!upas.includes("CULTURA")) upas.push("CULTURA");
+    if (!upas.includes("RE")) upas.push("RE");
+    if (!upas.includes("INDAUTOR")) upas.push("INDAUTOR");
+    return [...new Set(upas)].sort();
+  }),
+
+  listarUas: protectedProcedure.query(async () => {
+    const { getDb } = await import("../db");
+    const schema = await import("../../drizzle/schema");
+    const d = await getDb();
+    const rows = await d.selectDistinct({ ua: schema.servidoresPublicos.ua }).from(schema.servidoresPublicos);
+    return (rows.map((r) => r.ua).filter(Boolean) as string[]).sort();
+  }),
+
   exportarTodos: requireRole("admin", "consultor")
     .input(
       z.object({

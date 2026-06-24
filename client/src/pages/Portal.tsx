@@ -68,9 +68,10 @@ export default function Portal() {
   const aprobadas = solicitudes?.filter((s: any) => (s.solicitudes_curso ?? s).estado === "aprobada").length ?? 0;
   const completados = solicitudes?.filter((s: any) => (s.solicitudes_curso ?? s).estado === "completada").length ?? 0;
 
-  const nivelActual = perfil?.nivelProgresion ?? 1;
-  const nivelMax = 4;
+  const nivelActual = perfil?.nivelProgresion ?? 0;
+  const nivelMax = 5;
   const progreso = (nivelActual / nivelMax) * 100;
+  const NIVEL_LABELS_PROG: Record<number, string> = { 0: "Nuevo ingreso", 1: "N1", 2: "N2", 3: "N3", 4: "N4", 5: "N5" };
 
   return (
     <motion.div
@@ -129,17 +130,15 @@ export default function Portal() {
             {perfil?.cargo && <p className="text-sm text-slate-600">{perfil.cargo}</p>}
             {perfil?.dependencia && <p className="text-sm text-slate-400">{perfil.dependencia}</p>}
           </div>
-          {perfil?.nivelGobierno && (
-            <span className="inline-flex items-center rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700">
-              {NIVEL_LABELS[perfil.nivelGobierno] ?? perfil.nivelGobierno}
-            </span>
-          )}
+          <span className="inline-flex items-center rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700">
+            Federal
+          </span>
         </div>
 
         {/* Level Progression */}
         <div className="mt-5">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold text-slate-700">Nivel {nivelActual} de {nivelMax}</span>
+            <span className="text-sm font-semibold text-slate-700">{NIVEL_LABELS_PROG[nivelActual] ?? `N${nivelActual}`}</span>
             <span className="text-sm text-slate-400">{progreso.toFixed(0)}%</span>
           </div>
           <div className="h-3 w-full rounded-full bg-slate-100 overflow-hidden">

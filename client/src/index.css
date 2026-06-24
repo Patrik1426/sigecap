@@ -1,26 +1,80 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary-50: #eff6ff;
-  --color-primary-100: #dbeafe;
-  --color-primary-200: #bfdbfe;
-  --color-primary-300: #93c5fd;
-  --color-primary-400: #60a5fa;
-  --color-primary-500: #3b82f6;
-  --color-primary-600: #2563eb;
-  --color-primary-700: #1d4ed8;
-  --color-primary-800: #1e40af;
-  --color-primary-900: #1e3a8a;
+  /* ========================================
+     PALETA DE COLORES — SIGECAP
+     Cambiar aquí actualiza todo el sistema.
+     ======================================== */
 
-  --color-accent-400: #a78bfa;
-  --color-accent-500: #8b5cf6;
-  --color-accent-600: #7c3aed;
+  /* PRIMARY — Guinda institucional (Gobierno de México)
+     Botones, links, sidebar activo, badges principales,
+     focus rings, toggles, progress bars, gradientes de avatar */
+  --color-primary-50: #fdf2f5;
+  --color-primary-100: #f9d6e0;
+  --color-primary-200: #e8a3b8;
+  --color-primary-300: #c4607e;
+  --color-primary-400: #9b2247;
+  --color-primary-500: #611232;   /* Botones, badges, iconos activos */
+  --color-primary-600: #520f2b;   /* Botones hover, headers de modales */
+  --color-primary-700: #430c23;   /* Botones pressed */
+  --color-primary-800: #34091b;   /* Textos de título en PDF export */
+  --color-primary-900: #250613;   /* Fondo sidebar */
 
-  --color-navy-700: #0f2447;
-  --color-navy-800: #0c1b3a;
-  --color-navy-900: #08112a;
+  /* ACCENT — Dorado institucional
+     Gradientes de avatar, decoraciones, detalles visuales */
+  --color-accent-400: #e6d194;
+  --color-accent-500: #a57f2c;   /* Gradiente avatar, acentos visuales */
+  --color-accent-600: #8a6a24;
 
-  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  /* NAVY — Verde oscuro institucional (PANTONE 626 C / 627 C)
+     Login background, hero section, elementos dark */
+  --color-navy-700: #1e5b4f;     /* Verde claro — PANTONE 626 C */
+  --color-navy-800: #002f2a;     /* Verde oscuro — PANTONE 627 C */
+  --color-navy-900: #001f1b;     /* Verde profundo */
+
+  /* INSTITUCIONAL — Negro y gris oficiales */
+  --color-inst-black: #161a1d;   /* Negro — PANTONE Neutral Black C */
+  --color-inst-gray: #98989A;    /* Gris — PANTONE Cool Gray 7 C */
+
+  /* ========================================
+     TIPOGRAFÍA
+     Cambiar fuente aquí actualiza todo el sistema.
+     Cargar fuente en client/index.html via Google Fonts <link>.
+     ======================================== */
+
+  /* Fuente principal — Noto Sans (tipografía institucional Gobierno de México)
+     Cambiar en client/index.html si se modifica */
+  --font-sans: 'Noto Sans', system-ui, -apple-system, sans-serif;
+
+  /* Escala tipográfica — tamaños reutilizables
+     Usar con text-[--text-xxx] o directamente las clases de Tailwind */
+  --text-display: 2rem;        /* 32px — Títulos de página (h1) */
+  --text-heading: 1.25rem;     /* 20px — Subtítulos, cards (h2) */
+  --text-subheading: 1rem;     /* 16px — Secciones, labels grandes */
+  --text-body: 0.875rem;       /* 14px — Texto general, formularios */
+  --text-caption: 0.75rem;     /* 12px — Metadata, timestamps, badges */
+  --text-micro: 0.625rem;      /* 10px — Etiquetas mínimas, roles */
+
+  /* Pesos tipográficos usados:
+     400 (normal)   → texto de párrafo, descripciones
+     500 (medium)   → labels, nav items inactivos, metadata
+     600 (semibold) → botones, nav items, subtítulos
+     700 (bold)     → nombres, cards, sidebar títulos
+     800 (extrabold)→ títulos de página, números destacados */
+
+  /* ========================================
+     COLORES DE TAILWIND USADOS DIRECTAMENTE
+     (no se definen aquí, son de Tailwind):
+
+     slate    → Textos, bordes, fondos neutros, separadores
+     emerald  → Estado activo, éxito, usuarios activos
+     rose     → Estado inactivo, errores, baja, eliminar
+     amber    → Pendientes, advertencias, solicitudes de baja
+     indigo   → Rol admin, nivel completado, badges especiales
+     sky      → Rol capturista
+     violet   → Modalidad virtual
+     blue     → Modalidad presencial, badges de nivel
+     ======================================== */
 }
 
 body {

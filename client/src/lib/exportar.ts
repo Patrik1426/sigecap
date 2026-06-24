@@ -28,6 +28,10 @@ interface ServidorExport {
   fechaIngreso: string | Date;
   datosContacto?: string | null;
   grupoFuncion: string;
+  upa?: string | null;
+  cmao?: string | null;
+  ua?: string | null;
+  nivelProgresion?: number | null;
   estatus: string;
   observaciones?: string | null;
 }
@@ -41,6 +45,8 @@ function formatFecha(date: string | Date): string {
   });
 }
 
+const NIVEL_PROG_LABELS: Record<number, string> = { 0: "Nuevo ingreso", 1: "N1", 2: "N2", 3: "N3", 4: "N4", 5: "N5" };
+
 function prepararDatos(items: ServidorExport[]) {
   return items.map((s) => ({
     "Nombre Completo": s.nombreCompleto,
@@ -48,7 +54,10 @@ function prepararDatos(items: ServidorExport[]) {
     CURP: s.curp,
     Cargo: s.cargo,
     Dependencia: s.dependencia,
-    "Nivel de Gobierno": NIVEL_LABELS[s.nivel] ?? s.nivel,
+    "UPA (Sector)": s.upa ?? "",
+    CMAO: s.cmao ?? "",
+    "UA (Dirección)": s.ua ?? "",
+    "Nivel Progresión": NIVEL_PROG_LABELS[s.nivelProgresion ?? 0] ?? `N${s.nivelProgresion}`,
     "Fecha de Ingreso": formatFecha(s.fechaIngreso),
     "Datos de Contacto": s.datosContacto ?? "",
     "Grupo de Función": GRUPO_LABELS[s.grupoFuncion] ?? s.grupoFuncion,
@@ -67,7 +76,10 @@ export function exportarExcel(items: ServidorExport[], filename = "servidores_pu
     { wch: 20 }, // CURP
     { wch: 25 }, // Cargo
     { wch: 25 }, // Dependencia
-    { wch: 15 }, // Nivel
+    { wch: 15 }, // UPA
+    { wch: 10 }, // CMAO
+    { wch: 30 }, // UA
+    { wch: 15 }, // Nivel Progresión
     { wch: 15 }, // Fecha
     { wch: 25 }, // Contacto
     { wch: 18 }, // Grupo
@@ -85,7 +97,7 @@ export function exportarPDF(items: ServidorExport[], filename = "servidores_publ
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "letter" });
 
   doc.setFontSize(16);
-  doc.setTextColor(30, 58, 138);
+  doc.setTextColor(97, 18, 50);
   doc.text("Secretaría de Cultura", 14, 15);
 
   doc.setFontSize(11);
@@ -106,6 +118,9 @@ export function exportarPDF(items: ServidorExport[], filename = "servidores_publ
     "CURP",
     "Cargo",
     "Dependencia",
+    "UPA",
+    "CMAO",
+    "UA",
     "Nivel",
     "Fecha Ingreso",
     "Grupo",
@@ -118,7 +133,10 @@ export function exportarPDF(items: ServidorExport[], filename = "servidores_publ
     s.curp,
     s.cargo,
     s.dependencia,
-    NIVEL_LABELS[s.nivel] ?? s.nivel,
+    s.upa ?? "",
+    s.cmao ?? "",
+    s.ua ?? "",
+    NIVEL_PROG_LABELS[s.nivelProgresion ?? 0] ?? `N${s.nivelProgresion}`,
     formatFecha(s.fechaIngreso),
     GRUPO_LABELS[s.grupoFuncion] ?? s.grupoFuncion,
     s.estatus === "activo" ? "Activo" : "Inactivo",
@@ -129,21 +147,21 @@ export function exportarPDF(items: ServidorExport[], filename = "servidores_publ
     body: rows,
     startY: 33,
     styles: {
-      fontSize: 7,
-      cellPadding: 2,
+      fontSize: 6,
+      cellPadding: 1.5,
       lineColor: [226, 232, 240],
       lineWidth: 0.1,
     },
     headStyles: {
-      fillColor: [30, 58, 138],
+      fillColor: [97, 18, 50],
       textColor: [255, 255, 255],
       fontStyle: "bold",
-      fontSize: 7.5,
+      fontSize: 6.5,
     },
     alternateRowStyles: {
-      fillColor: [248, 250, 252],
+      fillColor: [253, 242, 245],
     },
-    margin: { left: 14, right: 14 },
+    margin: { left: 10, right: 10 },
   });
 
   doc.save(`${filename}_${new Date().toISOString().split("T")[0]}.pdf`);

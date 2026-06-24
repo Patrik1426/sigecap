@@ -24,6 +24,10 @@ export const servidoresPublicos = mysqlTable("servidores_publicos", {
   fechaIngreso: timestamp("fecha_ingreso").notNull(),
   datosContacto: varchar("datos_contacto", { length: 255 }),
   grupoFuncion: mysqlEnum("grupo_funcion", ["ADMO", "TECN", "SERV", "COMUN", "PROFE", "EDU"]).notNull(),
+  upa: varchar("upa", { length: 100 }),
+  cmao: varchar("cmao", { length: 50 }),
+  ua: varchar("ua", { length: 255 }),
+  nivelProgresion: int("nivel_progresion").default(0),
   estatus: mysqlEnum("estatus", ["activo", "inactivo"]).default("activo").notNull(),
   observaciones: text("observaciones"),
   creadoPor: int("creado_por").notNull(),
@@ -33,10 +37,16 @@ export const servidoresPublicos = mysqlTable("servidores_publicos", {
 }, (table) => ({
   rfcIdx: index("rfc_idx").on(table.rfc),
   curpIdx: index("curp_idx").on(table.curp),
+  nombreIdx: index("nombre_idx").on(table.nombreCompleto),
   dependenciaIdx: index("dependencia_idx").on(table.dependencia),
   nivelIdx: index("nivel_idx").on(table.nivel),
   grupoFuncionIdx: index("grupo_funcion_idx").on(table.grupoFuncion),
+  upaIdx: index("upa_idx").on(table.upa),
+  cmaoIdx: index("cmao_idx").on(table.cmao),
+  uaIdx: index("ua_idx").on(table.ua),
+  nivelProgIdx: index("nivel_prog_idx").on(table.nivelProgresion),
   estatusIdx: index("estatus_idx").on(table.estatus),
+  createdAtIdx: index("srv_created_at_idx").on(table.createdAt),
 }));
 
 export const auditoria = mysqlTable("auditoria", {
@@ -83,7 +93,7 @@ export const perfilesServidor = mysqlTable("perfiles_servidor", {
   dependencia: varchar("dependencia", { length: 255 }).notNull(),
   nivelGobierno: mysqlEnum("nivel_gobierno", ["federal", "estatal", "municipal", "otro"]).notNull(),
   grupoFuncion: mysqlEnum("grupo_funcion", ["ADMO", "TECN", "SERV", "COMUN", "PROFE", "EDU"]).notNull(),
-  nivelProgresion: int("nivel_progresion").default(1).notNull(),
+  nivelProgresion: int("nivel_progresion").default(0).notNull(),
   fechaIngreso: timestamp("fecha_ingreso").notNull(),
   datosContacto: varchar("datos_contacto", { length: 255 }),
   completado: boolean("completado").default(false).notNull(),
