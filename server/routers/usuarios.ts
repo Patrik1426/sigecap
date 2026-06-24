@@ -8,6 +8,7 @@ import {
   toggleActivoUsuario,
   getUserByEmail,
   createUser,
+  crearServidor,
 } from "../db";
 
 export const usuariosRouter = router({
@@ -34,6 +35,25 @@ export const usuariosRouter = router({
         email: input.email,
         passwordHash: hash,
         role: input.role,
+      });
+      await crearServidor({
+        userId: id,
+        nombreCompleto: input.nombre,
+        rfc: `UREG${String(id).padStart(9, "0")}`,
+        curp: `UREG${String(id).padStart(14, "0")}`,
+        cargo: "Por definir",
+        dependencia: "Por definir",
+        nivel: "federal",
+        grupoFuncion: "ADMO",
+        fechaIngreso: new Date(),
+        datosContacto: input.email,
+        upa: null,
+        cmao: null,
+        ua: null,
+        nivelProgresion: 0,
+        estatus: "activo",
+        creadoPor: id,
+        actualizadoPor: id,
       });
       return { success: true, id };
     }),

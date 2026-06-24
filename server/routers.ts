@@ -5,6 +5,7 @@ import { hashPassword, verifyPassword, generateToken } from "./auth";
 import {
   getUserByEmail,
   createUser,
+  crearServidor,
   crearTokenRestablecimiento,
   obtenerTokenRestablecimiento,
   actualizarPasswordUsuario,
@@ -46,6 +47,25 @@ const authRouter = router({
         passwordHash: hash,
         role: "user",
       });
+      await crearServidor({
+        userId: id,
+        nombreCompleto: input.nombre,
+        rfc: `UREG${String(id).padStart(9, "0")}`,
+        curp: `UREG${String(id).padStart(14, "0")}`,
+        cargo: "Por definir",
+        dependencia: "Por definir",
+        nivel: "federal",
+        grupoFuncion: "ADMO",
+        fechaIngreso: new Date(),
+        datosContacto: input.email,
+        upa: null,
+        cmao: null,
+        ua: null,
+        nivelProgresion: 0,
+        estatus: "activo",
+        creadoPor: id,
+        actualizadoPor: id,
+      });
       return { success: true, id };
     }),
 
@@ -60,6 +80,12 @@ const authRouter = router({
         throw new TRPCError({
           code: "UNAUTHORIZED",
           message: "Credenciales invalidas",
+        });
+      }
+      if (!user.isActive) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Tu cuenta ha sido desactivada. Contacta al administrador.",
         });
       }
       const token = generateToken(user);
