@@ -166,7 +166,7 @@ export const importacionRouter = router({
             accion: "crear",
             cambiosAnteriores: null,
             cambiosPosterior: JSON.stringify(reg),
-            descripcion: `Servidor "${reg.nombreCompleto}" importado via CSV por ${ctx.user.email}`,
+            descripcion: `Servidor "${reg.data.nombreCompleto}" importado via CSV por ${ctx.user.email}`,
           });
 
           creados.push(id);
