@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/hooks/useAuth";
+import ConfirmModal from "@/components/ConfirmModal";
 import {
   UserCog,
   Search,
@@ -57,6 +58,7 @@ export default function Usuarios() {
   const [search, setSearch] = useState("");
   const [roleDropdown, setRoleDropdown] = useState<number | null>(null);
   const [showCrear, setShowCrear] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{ type: "toggle"; id: number; nombre: string; isActive: boolean } | null>(null);
   const utils = trpc.useUtils();
 
   const { data: usuarios, isLoading } = trpc.usuarios.listar.useQuery(
@@ -97,9 +99,7 @@ export default function Usuarios() {
       alert("No puedes desactivar tu propia cuenta");
       return;
     }
-    const action = isActive ? "desactivar" : "activar";
-    if (!confirm(`¿${action.charAt(0).toUpperCase() + action.slice(1)} a "${nombre}"?`)) return;
-    toggleActivoMut.mutate({ id });
+    setConfirmAction({ type: "toggle", id, nombre, isActive });
   };
 
   const totalActivos = usuarios?.filter((u: any) => u.isActive).length ?? 0;
@@ -306,6 +306,21 @@ export default function Usuarios() {
           error={crearMut.error?.message ?? null}
         />
       )}
+
+      <ConfirmModal
+        open={!!confirmAction}
+        title={confirmAction?.isActive ? "Desactivar usuario" : "Activar usuario"}
+        message={`¿${confirmAction?.isActive ? "Desactivar" : "Activar"} a "${confirmAction?.nombre ?? ""}"?`}
+        confirmLabel={confirmAction?.isActive ? "Desactivar" : "Activar"}
+        variant={confirmAction?.isActive ? "danger" : "success"}
+        loading={toggleActivoMut.isPending}
+        onConfirm={() => {
+          if (confirmAction) {
+            toggleActivoMut.mutate({ id: confirmAction.id }, { onSuccess: () => setConfirmAction(null) });
+          }
+        }}
+        onCancel={() => setConfirmAction(null)}
+      />
     </motion.div>
   );
 }
@@ -313,6 +328,7 @@ export default function Usuarios() {
 function SolicitudesBajaSection() {
   const { data: bajas, isLoading } = trpc.perfil.listarBajas.useQuery();
   const utils = trpc.useUtils();
+  const [confirmBaja, setConfirmBaja] = useState<{ userId: number; nombre: string } | null>(null);
 
   const aprobarMut = trpc.perfil.aprobarBaja.useMutation({
     onSuccess: () => {
@@ -354,10 +370,7 @@ function SolicitudesBajaSection() {
                 )}
               </div>
               <button
-                onClick={() => {
-                  if (!confirm(`¿Aprobar baja de "${user.nombre}"? Se desactivará su cuenta y registro de servidor.`)) return;
-                  aprobarMut.mutate({ userId: perfil.userId });
-                }}
+                onClick={() => setConfirmBaja({ userId: perfil.userId, nombre: user.nombre })}
                 disabled={aprobarMut.isPending}
                 className="ml-3 flex shrink-0 items-center gap-1.5 rounded-lg bg-rose-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-600 disabled:opacity-50 transition-colors"
               >
@@ -368,6 +381,21 @@ function SolicitudesBajaSection() {
           );
         })}
       </div>
+
+      <ConfirmModal
+        open={!!confirmBaja}
+        title="Aprobar baja"
+        message={`¿Aprobar baja de "${confirmBaja?.nombre ?? ""}"? Se desactivará su cuenta y registro de servidor.`}
+        confirmLabel="Aprobar baja"
+        variant="danger"
+        loading={aprobarMut.isPending}
+        onConfirm={() => {
+          if (confirmBaja) {
+            aprobarMut.mutate({ userId: confirmBaja.userId }, { onSuccess: () => setConfirmBaja(null) });
+          }
+        }}
+        onCancel={() => setConfirmBaja(null)}
+      />
     </motion.div>
   );
 }
