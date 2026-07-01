@@ -10,7 +10,6 @@ export const users = mysqlTable("users", {
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
-  lastSignedIn: timestamp("last_signed_in"),
 }, (table) => ({
   curpIdx: index("users_curp_idx").on(table.curp),
   roleActiveIdx: index("users_role_active_idx").on(table.role, table.isActive),

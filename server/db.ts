@@ -130,7 +130,6 @@ export async function listarUsuarios(search?: string) {
       isActive: schema.users.isActive,
       createdAt: schema.users.createdAt,
       updatedAt: schema.users.updatedAt,
-      lastSignedIn: schema.users.lastSignedIn,
     })
     .from(schema.users)
     .where(where)
