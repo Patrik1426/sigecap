@@ -21,7 +21,7 @@ const cursoInput = z.object({
   descripcion: z.string().nullable().optional(),
   nivelRequerido: z.number().int().min(0).max(5).default(0),
   nivelGobierno: z.enum(["federal", "estatal", "municipal", "otro"]).nullable().optional(),
-  categoria: z.string().min(1, "Categoría requerida"),
+  categoria: z.string().default("general"),
   duracionHoras: z.number().int().positive(),
   modalidad: z.enum(["presencial", "virtual", "mixto"]),
   tipoPrograma: z.enum(["PAC", "CERT", "SDPC", "OTRO"]).default("OTRO"),

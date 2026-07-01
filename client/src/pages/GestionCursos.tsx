@@ -84,8 +84,9 @@ export default function GestionCursos() {
     fechaFin: "",
   });
 
-  const { data: cursos } = trpc.cursos.listar.useQuery(undefined, {
+  const { data: cursos, isFetching } = trpc.cursos.listar.useQuery(undefined, {
     placeholderData: (prev) => prev,
+    staleTime: 10_000,
   });
   const { data: instituciones } = trpc.instituciones.listar.useQuery({ soloActivas: true });
   const { data: finalidades } = trpc.cursos.listarFinalidades.useQuery();
@@ -316,7 +317,7 @@ export default function GestionCursos() {
       )}
 
       {/* Course list */}
-      {!cursos ? (
+      {(!cursos && isFetching) ? (
         viewMode === "grid" ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
