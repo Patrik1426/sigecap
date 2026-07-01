@@ -31,7 +31,6 @@ const fadeUp = {
 };
 
 const MODALIDADES = ["presencial", "virtual", "mixto"];
-const NIVELES_GOBIERNO = ["federal", "estatal", "municipal", "otro"];
 const TIPOS_PROGRAMA = ["PAC", "CERT", "SDPC", "OTRO"];
 
 type ModalState =
@@ -47,15 +46,7 @@ interface CursoFormData {
   modalidad: string;
   tipoPrograma: string;
   bloque: string;
-  numero: string;
-  institucionResponsable: string;
   finalidad: string;
-  fechaInicio: string;
-  fechaTermino: string;
-  horarioTexto: string;
-  fechaEvaluacion: string;
-  horarioEvaluacion: string;
-  duracionEvaluacion: string;
 }
 
 const emptyForm: CursoFormData = {
@@ -66,22 +57,9 @@ const emptyForm: CursoFormData = {
   modalidad: "presencial",
   tipoPrograma: "OTRO",
   bloque: "",
-  numero: "",
-  institucionResponsable: "",
   finalidad: "",
-  fechaInicio: "",
-  fechaTermino: "",
-  horarioTexto: "",
-  fechaEvaluacion: "",
-  horarioEvaluacion: "",
-  duracionEvaluacion: "",
 };
 
-const fechaInputValue = (v: any): string => {
-  if (!v) return "";
-  const d = new Date(v);
-  return isNaN(d.getTime()) ? "" : d.toISOString().slice(0, 10);
-};
 
 export default function GestionCursos() {
   const { user } = useAuth();
@@ -200,20 +178,12 @@ export default function GestionCursos() {
     setForm({
       nombre: curso.nombre,
       descripcion: curso.descripcion ?? "",
-      nivelGobierno: curso.nivelGobierno ?? "",
+      nivelGobierno: curso.nivelGobierno ?? "federal",
       duracionHoras: curso.duracionHoras,
       modalidad: curso.modalidad,
       tipoPrograma: curso.tipoPrograma ?? "OTRO",
       bloque: curso.bloque?.toString() ?? "",
-      numero: curso.numero?.toString() ?? "",
-      institucionResponsable: curso.institucionResponsable ?? "",
       finalidad: curso.finalidad ?? "",
-      fechaInicio: fechaInputValue(curso.fechaInicio),
-      fechaTermino: fechaInputValue(curso.fechaTermino),
-      horarioTexto: curso.horarioTexto ?? "",
-      fechaEvaluacion: fechaInputValue(curso.fechaEvaluacion),
-      horarioEvaluacion: curso.horarioEvaluacion ?? "",
-      duracionEvaluacion: curso.duracionEvaluacion ?? "",
     });
     setActiveTab("detalles");
     setModal({ type: "edit", id: curso.id });
@@ -229,15 +199,7 @@ export default function GestionCursos() {
       modalidad: form.modalidad as "presencial" | "virtual" | "mixto",
       tipoPrograma: form.tipoPrograma as "PAC" | "CERT" | "SDPC" | "OTRO",
       bloque: form.bloque ? Number(form.bloque) : undefined,
-      numero: form.numero ? Number(form.numero) : undefined,
-      institucionResponsable: form.institucionResponsable || undefined,
       finalidad: form.finalidad || undefined,
-      fechaInicio: form.fechaInicio ? new Date(form.fechaInicio) : undefined,
-      fechaTermino: form.fechaTermino ? new Date(form.fechaTermino) : undefined,
-      horarioTexto: form.horarioTexto || undefined,
-      fechaEvaluacion: form.fechaEvaluacion ? new Date(form.fechaEvaluacion) : undefined,
-      horarioEvaluacion: form.horarioEvaluacion || undefined,
-      duracionEvaluacion: form.duracionEvaluacion || undefined,
     };
     if (modal.type === "create") {
       await crearMut.mutateAsync(payload as any);
@@ -571,36 +533,7 @@ export default function GestionCursos() {
                 />
               </div>
 
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-500">Duracion (horas) *</label>
-                <input
-                  type="number"
-                  required
-                  min={1}
-                  value={form.duracionHoras}
-                  onChange={(e) => setForm({ ...form, duracionHoras: Number(e.target.value) })}
-                  className={inputClass}
-                />
-              </div>
-
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="mb-1 block text-xs font-semibold text-slate-500">Modalidad *</label>
-                  <select
-                    value={form.modalidad}
-                    onChange={(e) => setForm({ ...form, modalidad: e.target.value })}
-                    className={inputClass}
-                  >
-                    {MODALIDADES.map((m) => (
-                      <option key={m} value={m}>
-                        {modalidadLabel(m)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="mb-1 block text-xs font-semibold text-slate-500">Tipo de Programa</label>
                   <select
@@ -621,29 +554,37 @@ export default function GestionCursos() {
                     value={form.bloque}
                     onChange={(e) => setForm({ ...form, bloque: e.target.value })}
                     className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-semibold text-slate-500">No.</label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={form.numero}
-                    onChange={(e) => setForm({ ...form, numero: e.target.value })}
-                    className={inputClass}
+                    placeholder="Ej. 1"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-500">Institución Responsable</label>
-                <ComboInput
-                  value={form.institucionResponsable}
-                  onChange={(v) => setForm({ ...form, institucionResponsable: v })}
-                  options={(instituciones ?? []).map((i: any) => i.nombre)}
-                  className={inputClass}
-                  placeholder="Ej. INAP"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-500">Modalidad *</label>
+                  <select
+                    value={form.modalidad}
+                    onChange={(e) => setForm({ ...form, modalidad: e.target.value })}
+                    className={inputClass}
+                  >
+                    {MODALIDADES.map((m) => (
+                      <option key={m} value={m}>
+                        {modalidadLabel(m)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-500">Duración (horas) *</label>
+                  <input
+                    type="number"
+                    required
+                    min={1}
+                    value={form.duracionHoras}
+                    onChange={(e) => setForm({ ...form, duracionHoras: Number(e.target.value) })}
+                    className={inputClass}
+                  />
+                </div>
               </div>
 
               <div>
@@ -655,70 +596,6 @@ export default function GestionCursos() {
                   className={inputClass}
                   placeholder="Finalidad del curso (opcional)"
                 />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="mb-1 block text-xs font-semibold text-slate-500">Fecha de Inicio</label>
-                  <input
-                    type="date"
-                    value={form.fechaInicio}
-                    onChange={(e) => setForm({ ...form, fechaInicio: e.target.value })}
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-semibold text-slate-500">Fecha de Término</label>
-                  <input
-                    type="date"
-                    value={form.fechaTermino}
-                    onChange={(e) => setForm({ ...form, fechaTermino: e.target.value })}
-                    className={inputClass}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-500">Horario</label>
-                <input
-                  type="text"
-                  value={form.horarioTexto}
-                  onChange={(e) => setForm({ ...form, horarioTexto: e.target.value })}
-                  className={inputClass}
-                  placeholder="Ej. 09:00 - 13:00"
-                />
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="mb-1 block text-xs font-semibold text-slate-500">Fecha de Evaluación</label>
-                  <input
-                    type="date"
-                    value={form.fechaEvaluacion}
-                    onChange={(e) => setForm({ ...form, fechaEvaluacion: e.target.value })}
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-semibold text-slate-500">Horario de Evaluación</label>
-                  <input
-                    type="text"
-                    value={form.horarioEvaluacion}
-                    onChange={(e) => setForm({ ...form, horarioEvaluacion: e.target.value })}
-                    className={inputClass}
-                    placeholder="Ej. 10:00 - 12:00"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-semibold text-slate-500">Duración Evaluación</label>
-                  <input
-                    type="text"
-                    value={form.duracionEvaluacion}
-                    onChange={(e) => setForm({ ...form, duracionEvaluacion: e.target.value })}
-                    className={inputClass}
-                    placeholder="Ej. 2"
-                  />
-                </div>
               </div>
 
               <div className="flex gap-3 border-t border-slate-100 pt-4">
