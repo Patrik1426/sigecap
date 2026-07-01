@@ -74,6 +74,14 @@ export default function Servidores() {
     },
   });
 
+  const eliminarBulkMut = trpc.servidores.eliminarBulk.useMutation({
+    onSuccess: () => {
+      utils.servidores.listar.invalidate();
+      setSelected(new Set());
+      setConfirmDelete(null);
+    },
+  });
+
   const canCreate = role === "admin" || role === "capturista";
   const canEdit = role === "admin";
   const canDelete = role === "admin";
@@ -141,8 +149,22 @@ export default function Servidores() {
     });
   };
 
-  const selectAll = () => {
+  const [seleccionandoTodos, setSeleccionandoTodos] = useState(false);
+
+  const selectAll = async () => {
     if (!data?.items?.length) return;
+    if (selected.size > 0 && selected.size >= (data.total ?? data.items.length)) {
+      setSelected(new Set());
+      return;
+    }
+    if (selected.size === data.items.length && data.total && data.total > data.items.length) {
+      // ya tiene página, cargar todos los IDs
+      setSeleccionandoTodos(true);
+      const ids = await utils.servidores.listarTodosIds.fetch({ search: search || undefined });
+      setSelected(new Set(ids));
+      setSeleccionandoTodos(false);
+      return;
+    }
     if (selected.size === data.items.length) {
       setSelected(new Set());
     } else {
@@ -151,11 +173,7 @@ export default function Servidores() {
   };
 
   const eliminarSeleccionados = async () => {
-    for (const id of selected) {
-      await eliminarMut.mutateAsync({ id });
-    }
-    setSelected(new Set());
-    setConfirmDelete(null);
+    await eliminarBulkMut.mutateAsync({ ids: Array.from(selected) });
   };
 
   const openEdit = (srv: any) => {
@@ -298,14 +316,20 @@ export default function Servidores() {
       {selected.size > 0 && canDelete && (
         <div className="flex items-center justify-between rounded-xl border border-primary-200 bg-primary-50 px-4 py-2.5">
           <div className="flex items-center gap-3">
-            <button onClick={selectAll} className="text-xs font-semibold text-primary-600 hover:underline">
-              {selected.size === data?.items?.length ? "Deseleccionar todos" : "Seleccionar todos"}
+            <button onClick={selectAll} disabled={seleccionandoTodos} className="text-xs font-semibold text-primary-600 hover:underline disabled:opacity-50">
+              {seleccionandoTodos
+                ? "Cargando..."
+                : selected.size >= (data?.total ?? 0)
+                ? "Deseleccionar todos"
+                : selected.size === data?.items?.length && data?.total && data.total > data.items.length
+                ? `Seleccionar los ${data.total} en BD`
+                : "Deseleccionar todos"}
             </button>
-            <span className="text-xs text-primary-500">{selected.size} seleccionado{selected.size > 1 ? "s" : ""}</span>
+            <span className="text-xs text-primary-500">{selected.size} seleccionado{selected.size > 1 ? "s" : ""}{data?.total && selected.size >= data.total ? " (todos)" : ""}</span>
           </div>
           <button
             onClick={() => setConfirmDelete({ type: "bulk" })}
-            disabled={eliminarMut.isPending}
+            disabled={eliminarBulkMut.isPending}
             className="inline-flex items-center gap-1.5 rounded-lg bg-rose-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-600 disabled:opacity-50 transition-colors"
           >
             Eliminar {selected.size}
@@ -322,7 +346,7 @@ export default function Servidores() {
                 <th className="w-10 px-3 py-3">
                   <input
                     type="checkbox"
-                    checked={data?.items?.length > 0 && selected.size === data.items.length}
+                    checked={(data?.items?.length ?? 0) > 0 && selected.size === (data?.items?.length ?? 0)}
                     onChange={selectAll}
                     className="h-4 w-4 rounded border-slate-300 text-primary-500 focus:ring-primary-500/20 cursor-pointer"
                   />

@@ -170,6 +170,45 @@ export const servidoresRouter = router({
       return { success: true };
     }),
 
+  eliminarBulk: requireRole("admin")
+    .input(z.object({ ids: z.array(z.number()).min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const { getDb } = await import("../db");
+      const schema = await import("../../drizzle/schema");
+      const { inArray } = await import("drizzle-orm");
+      const d = await getDb();
+      await d.delete(schema.servidoresPublicos).where(inArray(schema.servidoresPublicos.id, input.ids));
+      await crearAuditoria({
+        servidorId: null,
+        usuarioId: ctx.user.id,
+        accion: "eliminar",
+        cambiosAnteriores: JSON.stringify(input.ids),
+        cambiosPosterior: null,
+        descripcion: `${input.ids.length} servidores eliminados en lote por ${ctx.user.nombre ?? ctx.user.email ?? ctx.user.id}`,
+      });
+      return { success: true, eliminados: input.ids.length };
+    }),
+
+  listarTodosIds: requireRole("admin")
+    .input(z.object({ search: z.string().optional() }))
+    .query(async ({ input }) => {
+      const { getDb } = await import("../db");
+      const schema = await import("../../drizzle/schema");
+      const { like, or } = await import("drizzle-orm");
+      const d = await getDb();
+      let query = d.select({ id: schema.servidoresPublicos.id }).from(schema.servidoresPublicos);
+      if (input.search) {
+        const s = `%${input.search}%`;
+        (query as any).where(or(
+          like(schema.servidoresPublicos.nombreCompleto, s),
+          like(schema.servidoresPublicos.rfc, s),
+          like(schema.servidoresPublicos.curp, s),
+        ));
+      }
+      const rows = await query;
+      return rows.map((r) => r.id);
+    }),
+
   miServidor: protectedProcedure.query(async ({ ctx }) => {
     const { getDb } = await import("../db");
     const schema = await import("../../drizzle/schema");
