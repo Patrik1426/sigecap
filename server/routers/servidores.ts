@@ -91,7 +91,7 @@ export const servidoresRouter = router({
         accion: "crear",
         cambiosAnteriores: null,
         cambiosPosterior: JSON.stringify(input),
-        descripcion: `Servidor público "${input.nombreCompleto}" creado por ${ctx.user.email}`,
+        descripcion: `Servidor público "${input.nombreCompleto}" creado por ${ctx.user.nombre ?? ctx.user.email ?? ctx.user.id}`,
       });
 
       return { success: true, id };
@@ -139,7 +139,7 @@ export const servidoresRouter = router({
         accion: "actualizar",
         cambiosAnteriores: JSON.stringify(anterior),
         cambiosPosterior: JSON.stringify(data),
-        descripcion: `Servidor público "${anterior.nombreCompleto}" actualizado por ${ctx.user.email}`,
+        descripcion: `Servidor público "${anterior.nombreCompleto}" actualizado por ${ctx.user.nombre ?? ctx.user.email ?? ctx.user.id}`,
       });
 
       return { success: true };
@@ -164,7 +164,7 @@ export const servidoresRouter = router({
         accion: "eliminar",
         cambiosAnteriores: JSON.stringify(anterior),
         cambiosPosterior: null,
-        descripcion: `Servidor público "${anterior.nombreCompleto}" eliminado por ${ctx.user.email}`,
+        descripcion: `Servidor público "${anterior.nombreCompleto}" eliminado por ${ctx.user.nombre ?? ctx.user.email ?? ctx.user.id}`,
       });
 
       return { success: true };
