@@ -302,7 +302,7 @@ export async function eliminarServidor(id: number) {
 
 export async function getServidoresStats() {
   const d = await getDb();
-  const [byEstatus, byNivel, byGrupo, totalResult, byDependencia, byMes] = await Promise.all([
+  const [byEstatus, byNivel, byGrupo, totalResult, byDependencia, byMes, solicitudesPendientesResult] = await Promise.all([
     d
       .select({
         estatus: schema.servidoresPublicos.estatus,
@@ -345,6 +345,10 @@ export async function getServidoresStats() {
       .groupBy(sql`DATE_FORMAT(created_at, '%Y-%m')`)
       .orderBy(sql`DATE_FORMAT(created_at, '%Y-%m') ASC`)
       .limit(12),
+    d
+      .select({ count: sql<number>`count(*)` })
+      .from(schema.solicitudesCurso)
+      .where(eq(schema.solicitudesCurso.estado, "pendiente")),
   ]);
 
   return {
@@ -354,6 +358,7 @@ export async function getServidoresStats() {
     byGrupo,
     byDependencia,
     byMes,
+    solicitudesPendientes: solicitudesPendientesResult[0]?.count ?? 0,
   };
 }
 
