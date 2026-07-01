@@ -28,7 +28,6 @@ export const servidoresPublicos = mysqlTable("servidores_publicos", {
   datosContacto: varchar("datos_contacto", { length: 255 }),
   grupoFuncion: mysqlEnum("grupo_funcion", ["ADMO", "TECN", "SERV", "COMUN", "PROFE", "EDU"]).notNull(),
   upa: varchar("upa", { length: 100 }),
-  cmo: varchar("cmo", { length: 50 }),
   cmao: varchar("cmao", { length: 50 }),
   ua: varchar("ua", { length: 255 }),
   nivelProgresion: int("nivel_progresion").default(0),
