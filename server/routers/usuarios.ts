@@ -7,6 +7,7 @@ import {
   cambiarRolUsuario,
   toggleActivoUsuario,
   getUserByEmail,
+  getUserByCurp,
   createUser,
   crearServidor,
   crearAuditoria,
@@ -28,23 +29,24 @@ export const usuariosRouter = router({
     .input(
       z.object({
         nombre: z.string().min(2, "Nombre requerido"),
-        email: z.string().email("Email inválido"),
+        curp: z.string().length(18, "CURP debe tener 18 caracteres"),
         password: z.string().min(8, "Mínimo 8 caracteres"),
         role: z.enum(["admin", "capturista", "consultor", "user"]),
       }),
     )
     .mutation(async ({ input }) => {
-      const existing = await getUserByEmail(input.email);
+      const curp = input.curp.toUpperCase();
+      const existing = await getUserByCurp(curp);
       if (existing) {
         throw new TRPCError({
           code: "CONFLICT",
-          message: "Email ya registrado",
+          message: "CURP ya registrada",
         });
       }
       const hash = await hashPassword(input.password);
       const id = await createUser({
         nombre: input.nombre,
-        email: input.email,
+        curp,
         passwordHash: hash,
         role: input.role,
       });
@@ -52,13 +54,13 @@ export const usuariosRouter = router({
         userId: id,
         nombreCompleto: input.nombre,
         rfc: `UREG${String(id).padStart(9, "0")}`,
-        curp: `UREG${String(id).padStart(14, "0")}`,
+        curp,
         cargo: "Por definir",
         dependencia: "Por definir",
         nivel: "federal",
         grupoFuncion: "ADMO",
         fechaIngreso: new Date(),
-        datosContacto: input.email,
+        datosContacto: null,
         upa: null,
         cmao: null,
         ua: null,

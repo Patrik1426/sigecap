@@ -471,18 +471,18 @@ function CrearUsuarioModal({
   error,
 }: {
   onClose: () => void;
-  onSubmit: (data: { nombre: string; email: string; password: string; role: "admin" | "capturista" | "consultor" | "user" }) => Promise<void>;
+  onSubmit: (data: { nombre: string; curp: string; password: string; role: "admin" | "capturista" | "consultor" | "user" }) => Promise<void>;
   loading: boolean;
   error: string | null;
 }) {
   const [nombre, setNombre] = useState("");
-  const [email, setEmail] = useState("");
+  const [curp, setCurp] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<"admin" | "capturista" | "consultor" | "user">("user");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSubmit({ nombre, email, password, role });
+    await onSubmit({ nombre, curp, password, role });
   };
 
   const inputClass =
@@ -534,17 +534,19 @@ function CrearUsuarioModal({
 
           <div>
             <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-widest text-slate-400">
-              Correo electrónico
+              CURP
             </label>
             <div className="relative">
-              <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" />
+              <User size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" />
               <input
-                type="email"
+                type="text"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="correo@ejemplo.com"
-                className={inputClass}
+                minLength={18}
+                maxLength={18}
+                value={curp}
+                onChange={(e) => setCurp(e.target.value.toUpperCase())}
+                placeholder="CURP de 18 caracteres"
+                className={`${inputClass} font-mono tracking-wider`}
               />
             </div>
           </div>
