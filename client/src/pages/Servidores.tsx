@@ -316,7 +316,7 @@ export default function Servidores() {
 
       {/* Tabla */}
       <div className="overflow-x-auto rounded-lg bg-white shadow-card-rest">
-        <table className="w-full text-left text-sm">
+        <table className="w-full min-w-160 text-left text-sm">
           <thead className="border-b bg-gray-50 text-xs uppercase text-gray-500">
             <tr>
               {canDelete && (

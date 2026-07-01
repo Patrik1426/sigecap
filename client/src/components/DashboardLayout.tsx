@@ -200,14 +200,14 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Main */}
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex flex-1 min-w-0 flex-col overflow-hidden">
         <header className="flex h-14 items-center gap-4 border-b border-slate-200/80 bg-white px-5 lg:hidden">
           <button onClick={() => setSidebarOpen(true)} className="text-slate-600">
             <Menu size={22} />
           </button>
           <span className="text-sm font-bold text-slate-800">Secretaría de Cultura</span>
         </header>
-        <main className="flex-1 overflow-y-auto p-5 lg:p-8">{children}</main>
+        <main className="flex-1 min-w-0 overflow-y-auto p-5 lg:p-8">{children}</main>
       </div>
     </div>
   );
