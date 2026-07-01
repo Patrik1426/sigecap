@@ -207,7 +207,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           </button>
           <span className="text-sm font-bold text-slate-800">Secretaría de Cultura</span>
         </header>
-        <main className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto p-5 lg:p-8">{children}</main>
+        <main className="flex-1 min-w-0 overflow-y-auto p-5 lg:p-8">{children}</main>
       </div>
     </div>
   );
