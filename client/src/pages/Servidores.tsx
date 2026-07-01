@@ -316,7 +316,7 @@ export default function Servidores() {
 
       {/* Tabla */}
       <div className="overflow-x-auto rounded-lg bg-white shadow-card-rest">
-        <table className="w-full min-w-160 text-left text-sm">
+        <table className="w-full text-left text-sm">
           <thead className="border-b bg-gray-50 text-xs uppercase text-gray-500">
             <tr>
               {canDelete && (
@@ -330,10 +330,10 @@ export default function Servidores() {
                 </th>
               )}
               <th className="px-4 py-3">Nombre</th>
-              <th className="px-4 py-3">RFC</th>
-              <th className="hidden px-4 py-3 md:table-cell">CURP</th>
-              <th className="hidden px-4 py-3 lg:table-cell">Cargo</th>
-              <th className="hidden px-4 py-3 lg:table-cell">Dependencia</th>
+              <th className="hidden px-4 py-3 lg:table-cell">RFC</th>
+              <th className="hidden px-4 py-3 xl:table-cell">CURP</th>
+              <th className="hidden px-4 py-3 xl:table-cell">Cargo</th>
+              <th className="hidden px-4 py-3 xl:table-cell">Dependencia</th>
               <th className="px-4 py-3">Estatus</th>
               {(canEdit || canDelete) && (
                 <th className="px-4 py-3">Acciones</th>
@@ -376,16 +376,16 @@ export default function Servidores() {
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-3 font-mono text-xs">
+                  <td className="hidden px-4 py-3 font-mono text-xs lg:table-cell">
                     {srv.rfc}
                   </td>
-                  <td className="hidden px-4 py-3 font-mono text-xs md:table-cell">
+                  <td className="hidden px-4 py-3 font-mono text-xs xl:table-cell">
                     {srv.curp}
                   </td>
-                  <td className="hidden px-4 py-3 lg:table-cell">
+                  <td className="hidden px-4 py-3 xl:table-cell">
                     {capitalizarNombre(srv.cargo)}
                   </td>
-                  <td className="hidden px-4 py-3 lg:table-cell max-w-55">
+                  <td className="hidden px-4 py-3 xl:table-cell max-w-55">
                     <span className="block truncate" title={capitalizarNombre(srv.dependencia)}>
                       {capitalizarNombre(srv.dependencia)}
                     </span>
